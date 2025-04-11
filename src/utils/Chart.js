@@ -36,19 +36,50 @@ class Chart extends CanvasManager {
   }
 
   drawPointOnChart(value, position, currency, color) {
+    // Return early if value is invalid
+    if (value === undefined || value === null || !Number.isFinite(parseFloat(value))) {
+      return; // Skip drawing points with invalid values
+    }
+
     const { context, width, height } = this;
     const { x, y } = position;
+
+    // Make sure position coordinates are valid numbers
+    if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+      return; // Skip drawing if position is invalid
+    }
+
     const { devicePixelRatio } = window;
     const halfWidth = 0.5 * width;
     const halfHeight = 0.5 * height;
-    const formattedValue = Helper.formatPrice(value, currency);
 
+    // Get formatted value safely
+    let formattedValue;
+    try {
+      formattedValue = Helper.formatPrice(value, currency);
+    } catch (error) {
+      formattedValue = '-'; // Fallback if formatting fails
+    }
+
+    // Draw the point
     context.beginPath();
     context.arc(x, y, 5 * devicePixelRatio, 0, 2 * Math.PI);
-    context.fillStyle = color;
+    context.fillStyle = color || '#ffffff'; // Default to white if color is missing
     context.fill();
-    context.textAlign = x < halfWidth ? 'left' : 'right';
-    context.fillText(formattedValue, x + (x < halfWidth ? 8 : -8) * devicePixelRatio, y + (y < halfHeight ? -10 : 10) * devicePixelRatio);
+
+    // Draw the text label
+    try {
+      context.textAlign = x < halfWidth ? 'left' : 'right';
+      context.fillStyle = '#ffffff'; // Ensure text color is set
+      context.fillText(
+        formattedValue,
+        x + (x < halfWidth ? 8 : -8) * devicePixelRatio,
+        y + (y < halfHeight ? -10 : 10) * devicePixelRatio
+      );
+    } catch (error) {
+      console.warn('Error drawing chart label:', error);
+      // Continue rendering without the label if there's an error
+    }
   }
 
   render() {

@@ -487,7 +487,6 @@
 // };
 
 // export default ChartView;
-
 import { Box, CircularProgress, Dialog, DialogContent, DialogTitle, Grid, Slide, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Close, KeyboardArrowDown } from '@mui/icons-material';
@@ -498,6 +497,7 @@ import Helper from '../../utils/Helper';
 import useConfigStore from '../../store/useConfigStore';
 import { Scrollbar } from 'react-scrollbars-custom';
 import NewsSection from '../NewsSection';
+import { getLocationImage } from '../../data/locationImages';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="down" ref={ref} {...props} />;
@@ -650,6 +650,20 @@ const ChartView = () => {
     }
   }, [isRevenueSelected, period, selectedRevenue]);
 
+  // Get the appropriate image for the selected location
+  const getSelectedLocationImage = () => {
+    if (selectedRevenue) {
+      // First try to use the image from the data
+      if (selectedRevenue.image) {
+        return selectedRevenue.image;
+      }
+
+      // Otherwise generate an image based on the location
+      return getLocationImage(selectedRevenue);
+    }
+    return 'https://via.placeholder.com/20';
+  };
+
   // Check if we have valid metrics data before rendering
   const hasValidMetrics = selectedRevenue?.metrics?.revenue && selectedRevenue?.metrics?.profit && selectedRevenue?.metrics?.growth;
 
@@ -679,11 +693,11 @@ const ChartView = () => {
                 <KeyboardArrowDown sx={{ transition: 'all 0.2s', transform: expanded ? '' : 'rotateZ(-90deg)' }} />
               </StyledIconButton>
               <img
-                src={selectedRevenue?.image || 'https://via.placeholder.com/20'}
-                height={20}
-                width={20}
+                src={getSelectedLocationImage()}
+                height={30}
+                width={30}
                 alt={selectedRevenue?.name}
-                style={{ marginRight: '10px' }}
+                style={{ marginRight: '10px', borderRadius: '50%', objectFit: 'cover' }}
               />
               {selectedRevenue?.name}, {selectedRevenue?.state}, {selectedRevenue?.country}
             </Box>
@@ -797,6 +811,20 @@ const ChartView = () => {
                           <Typography variant="subtitle2" color="#CFA935" mb={1}>
                             Location Details
                           </Typography>
+                          {/* Display the location image in larger size */}
+                          <Box mb={2} display="flex" justifyContent="center">
+                            <img
+                              src={getSelectedLocationImage()}
+                              alt={selectedRevenue?.name}
+                              style={{
+                                width: '100%',
+                                height: '120px',
+                                objectFit: 'cover',
+                                borderRadius: '4px',
+                                marginBottom: '8px'
+                              }}
+                            />
+                          </Box>
                           <Typography variant="body2" color="white">
                             <strong>City:</strong> {selectedRevenue.name}
                           </Typography>
@@ -809,13 +837,55 @@ const ChartView = () => {
                         </Box>
 
                         {/* News Section */}
-                        <Typography variant="subtitle2" color="#CFA935" px={2} mb={1}>
+                        {/* <Typography variant="subtitle2" color="#CFA935" px={2} mb={1}>
                           Related News
                         </Typography>
                         {newsData?.data?.results?.map((newsItem, index) => (
                           <NewsSection key={index} newsItem={newsItem} />
-                        ))}
+                        ))} */}
                       </Scrollbar>
+                    )}
+                  </Box>
+                  <Box p={2} mb={2} bgcolor="#1E2130" borderRadius="4px">
+                    <Typography variant="subtitle2" color="#CFA935" mb={1}>
+                      Customer Details
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Customer Name:</strong> {selectedRevenue.customer_name}
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Brand:</strong> {selectedRevenue.brand}
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Type:</strong> {selectedRevenue.customer_type}
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Industry:</strong> {selectedRevenue.industry}
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Account Status:</strong> {selectedRevenue.account_status}
+                    </Typography>
+                  </Box>
+                  <Box p={2} mb={2} bgcolor="#1E2130" borderRadius="4px">
+                    <Typography variant="subtitle2" color="#CFA935" mb={1}>
+                      Sales Information
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Sales Rep:</strong> {selectedRevenue.assigned_sales_rep}
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Territory:</strong> {selectedRevenue.rep_territory}
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Stage:</strong> {selectedRevenue.opportunity_stage}
+                    </Typography>
+                    <Typography variant="body2" color="white">
+                      <strong>Last Engaged:</strong> {selectedRevenue.last_engaged_date}
+                    </Typography>
+                    {selectedRevenue.is_priority_for_ceo && (
+                      <Typography variant="body2" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
+                        CEO Priority Account
+                      </Typography>
                     )}
                   </Box>
                 </Grid>

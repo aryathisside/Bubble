@@ -1192,55 +1192,66 @@ class BubbleManager extends CanvasManager {
     }
   }
 
-  // Unified recalculate method - fix for bubbles shrinking and disappearing
+  // Unified recalculate method with improved revenue-based sizing
   recalculate() {
     if (this.needsRecalculation === false || this.bubbles.length === 0) {
       return;
     }
 
     const { size, color, colors, period, timeFrame, metricType, content, baseCurrency } = this.properties;
-    // For first load, use a longer transition time, otherwise use null for no transition
     const isInitialRecalculation = this.recalculationCount === 0;
-    // Get the transition time - longer for first load, none for subsequent updates
-    const transitionTime = this.isFirstLoad ? 2000 : null;
 
     // Determine which time period to use (revenue or crypto)
     const effectiveTimeFrame = timeFrame || period || 'month';
 
+    // Determine which metric type to use for sizing
+    const effectiveMetricType = metricType || 'revenue';
+
     let totalSize = 0;
     let maxColorValue = 0;
+    let maxRevenueValue = 0;
+    let minRevenueValue = Infinity;
 
-    // First pass: Calculate sizes and gather stats
+    // First pass: gather statistics and calculate initial sizes
     for (const bubble of this.bubbles) {
       const isNewPush = bubble.latestPush === this.latestPush;
 
-      // FIX: Always calculate size for visible bubbles, don't set to 0
       if (bubble.currency.metrics) {
-        // Revenue data - use a minimum default size if calculation fails
-        try {
-          bubble.size = isNewPush ?
-            Math.max(Helper.calculateRevenueRadius(bubble.currency, size, effectiveTimeFrame, metricType), 5) :
-            Math.max(bubble.size, 5); // Keep existing size for bubbles not in current push
-        } catch (error) {
-          console.warn("Error calculating revenue radius:", error);
-          bubble.size = 5; // Default minimum size
+        // For revenue data, directly calculate based on the selected metric
+        if (isNewPush) {
+          try {
+            bubble.size = Helper.calculateRevenueRadius(
+              bubble.currency,
+              size,
+              effectiveTimeFrame,
+              effectiveMetricType
+            );
+
+            // Track min and max values for normalization
+            const metricValue = bubble.currency.metrics[effectiveMetricType][effectiveTimeFrame];
+            if (metricValue > maxRevenueValue) maxRevenueValue = metricValue;
+            if (metricValue < minRevenueValue) minRevenueValue = metricValue;
+          } catch (error) {
+            console.warn("Error calculating revenue radius:", error);
+            bubble.size = 5;
+          }
+        } else {
+          bubble.size = Math.max(bubble.size, 5);
         }
       } else {
-        // Crypto data - use a minimum default size if calculation fails
-        try {
-          bubble.size = isNewPush ?
-            Math.max(Helper.calculateRadius(bubble.currency, size, effectiveTimeFrame), 5) :
-            Math.max(bubble.size, 5); // Keep existing size for bubbles not in current push
-        } catch (error) {
-          console.warn("Error calculating radius:", error);
-          bubble.size = 5; // Default minimum size
-        }
+        // Fallback for crypto data
+        bubble.size = isNewPush ? Helper.calculateRadius(bubble.currency, size, effectiveTimeFrame) : 0;
+      }
+
+      // Ensure minimum size to prevent disappearing
+      if (bubble.size > 0 && bubble.size < 5) {
+        bubble.size = 5;
       }
 
       if (bubble.size > 0) {
         totalSize += bubble.size;
 
-        // Choose appropriate color value calculation
+        // Calculate color value
         let colorValue;
         try {
           if (bubble.currency.metrics) {
@@ -1249,7 +1260,6 @@ class BubbleManager extends CanvasManager {
             colorValue = Math.abs(Helper.calculateColorValue(bubble.currency, color, effectiveTimeFrame));
           }
         } catch (error) {
-          console.warn("Error calculating color value:", error);
           colorValue = 0;
         }
 
@@ -1259,19 +1269,32 @@ class BubbleManager extends CanvasManager {
       }
     }
 
+    // Calculate size factor based on available canvas space
     const canvasArea = this.width * this.height;
-    // Increase minimum size factor to prevent bubbles from disappearing
-    const sizeFactor = totalSize === 0 ? 1 : Math.max(2, (canvasArea / totalSize) * 0.7);
+    const sizeFactor = totalSize === 0 ? 1 : Math.max(1, (canvasArea / totalSize) * 0.6);
 
-    // Second pass: Apply calculations to bubbles
+    // Second pass: Apply calculated sizes and colors to bubbles
     for (const bubble of this.bubbles) {
-      // FIX: Ensure a minimum visible radius, much larger than before
-      const radius = Math.max(30, Math.sqrt((bubble.size * sizeFactor) / Math.PI));
+      // Scale the bubble size based on total available space
+      let radius = Math.max(10, Math.sqrt((bubble.size * sizeFactor) / Math.PI));
 
-      // FIX: Use transitionTime based on whether this is first load or not
-      bubble.setRadius(radius, transitionTime);
+      // For revenue/profit, we can further adjust radius to be proportional to the value
+      if (effectiveMetricType === 'revenue' || effectiveMetricType === 'profit') {
+        try {
+          const metricValue = bubble.currency.metrics[effectiveMetricType][effectiveTimeFrame];
+          // Apply additional scaling for better proportionality
+          const valueRatio = (metricValue - minRevenueValue) / (maxRevenueValue - minRevenueValue || 1);
+          // Adjust radius to maintain minimum size while allowing larger values to be more prominent
+          radius = Math.max(radius, 10 + valueRatio * 40);
+        } catch (error) {
+          console.warn("Error in revenue scaling:", error);
+        }
+      }
 
-      // Calculate color value
+      // Set the radius with transition if this is initial calculation
+      bubble.setRadius(radius, isInitialRecalculation ? 2000 : 500);
+
+      // Calculate appropriate color
       let colorValue;
       try {
         if (bubble.currency.metrics) {
@@ -1280,13 +1303,12 @@ class BubbleManager extends CanvasManager {
           colorValue = Helper.calculateColorValue(bubble.currency, color, effectiveTimeFrame);
         }
       } catch (error) {
-        console.warn("Error calculating color value for rendering:", error);
         colorValue = 0;
       }
 
       bubble.setColor(Helper.calculateColor(colorValue, colors, maxColorValue));
 
-      // Generate content
+      // Set content
       try {
         if (bubble.currency.metrics) {
           bubble.setContent(Helper.generateRevenueContent(bubble.currency, content, effectiveTimeFrame, baseCurrency));
@@ -1294,29 +1316,23 @@ class BubbleManager extends CanvasManager {
           bubble.setContent(Helper.generateContent(bubble.currency, content, effectiveTimeFrame, baseCurrency));
         }
       } catch (error) {
-        console.warn("Error generating content:", error);
         bubble.setContent(bubble.currency.symbol || "");
       }
 
-      // Keep bubbles more centered by adding padding
-      const padding = 50; // Extra padding to keep bubbles away from edges
+      // Keep bubbles within canvas
+      const padding = 50;
       bubble.posX = Helper.clamp(bubble.posX, radius + padding, this.width - radius - padding);
       bubble.posY = Helper.clamp(bubble.posY, radius + padding, this.height - radius - padding);
     }
 
-    // Reduce damping to prevent bubbles from moving too quickly
+    // Reduce damping for smoother motion
     for (const bubble of this.bubbles) {
-      bubble.speedX *= 0.5;
-      bubble.speedY *= 0.5;
+      bubble.speedX *= 0.9;
+      bubble.speedY *= 0.9;
     }
 
     this.recalculationCount += 1;
     this.wakeUp();
-
-    // After first recalculation, set flag to false
-    if (this.isFirstLoad && this.recalculationCount > 0) {
-      this.isFirstLoad = false;
-    }
   }
 
   // Set the properties for the bubbles
@@ -1325,43 +1341,29 @@ class BubbleManager extends CanvasManager {
     this.needsRecalculation = true;
   }
 
-  // Add or update bubbles based on the provided currencies
   pushCurrencies(currencies) {
-    if (!currencies || currencies.length === 0) {
-      console.warn("No currency data provided to pushCurrencies");
-      return;
-    }
-
+    // Increment the latest push timestamp
     this.latestPush += 1;
-    console.log(`Pushing ${currencies.length} currencies to BubbleManager`);
 
-    // Reset isFirstLoad if this is a new set of bubbles
-    if (this.bubbles.length === 0 || this.bubbles.length !== currencies.length) {
-      this.isFirstLoad = true;
-    }
+    this.bubbles = [];
+    this.bubblesDict = {};
 
+    // Process the new currencies
     for (const currency of currencies) {
       const { id } = currency;
-      if (!id) {
-        console.warn("Currency missing ID:", currency);
-        continue;
-      }
-
-      let bubble = this.bubblesDict[id];
-      if (!bubble) {
-        bubble = new BubbleNew(currency);
-        bubble.posX = Math.random() * this.width;
-        bubble.posY = Math.random() * this.height;
-        this.bubbles.push(bubble);
-        this.bubblesDict[id] = bubble;
-      }
+      let bubble = new BubbleNew(currency);
+      bubble.posX = Math.random() * this.width;
+      bubble.posY = Math.random() * this.height;
+      this.bubbles.push(bubble);
+      this.bubblesDict[id] = bubble;
       bubble.currency = currency;
       bubble.latestPush = this.latestPush;
     }
 
-    // Mark for recalculation
+    // Force recalculation and redraw
     this.needsRecalculation = true;
     this.recalculate();
+    this.wakeUp();
   }
 
   // Override the destroy method to clean up resources

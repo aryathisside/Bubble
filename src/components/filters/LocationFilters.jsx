@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, Stack } from '@mui/material';
 import StyledButton from '../../ui/overrides/Button';
 import useDataStore from '../../store/useDataStore';
-import { getAvailableFilters } from '../../data/revenueData';
 
 const LocationFilters = () => {
   const revenueData = useDataStore((state) => state.revenueData);
@@ -15,16 +14,46 @@ const LocationFilters = () => {
     cities: []
   });
 
+  // Function to handle location filter changes with debug logging
   const handleLocationFilter = (newLocationFilter) => {
     console.log('Setting location filter:', newLocationFilter);
     setLocationFilter(newLocationFilter);
   };
 
+  // Calculate available filters based on revenue data
   useEffect(() => {
     if (revenueData.length > 0) {
-      setAvailableFilters(getAvailableFilters(revenueData));
+      // Get unique countries
+      const countries = [...new Set(revenueData.map((item) => item.country))];
+
+      // Get all states (we'll filter them when displaying)
+      const states = [...new Set(revenueData.map((item) => item.state))];
+
+      // Get all cities (we'll filter them when displaying)
+      const cities = [...new Set(revenueData.map((item) => item.name))];
+
+      setAvailableFilters({ countries, states, cities });
+      console.log('Available filters updated:', { countries, states, cities });
     }
   }, [revenueData]);
+
+  // Get states for the selected country
+  const getStatesForCountry = (country) => {
+    if (!country) return [];
+
+    const statesInCountry = [...new Set(revenueData.filter((item) => item.country === country).map((item) => item.state))];
+
+    return statesInCountry;
+  };
+
+  // Get cities for the selected state and country
+  const getCitiesForState = (country, state) => {
+    if (!country || !state) return [];
+
+    const citiesInState = [...new Set(revenueData.filter((item) => item.country === country && item.state === state).map((item) => item.name))];
+
+    return citiesInState;
+  };
 
   return (
     <Box p={2}>
@@ -38,7 +67,7 @@ const LocationFilters = () => {
         </Typography>
         <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
           <StyledButton
-            onClick={() => setLocationFilter({ country: null, state: null, city: null })}
+            onClick={() => handleLocationFilter({ country: null, state: null, city: null })}
             sx={{
               mr: 1,
               mb: 1,
@@ -52,7 +81,7 @@ const LocationFilters = () => {
           {availableFilters.countries.map((country) => (
             <StyledButton
               key={country}
-              onClick={() => setLocationFilter({ country, state: null, city: null })}
+              onClick={() => handleLocationFilter({ country, state: null, city: null })}
               sx={{
                 mr: 1,
                 mb: 1,
@@ -72,7 +101,7 @@ const LocationFilters = () => {
             </Typography>
             <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
               <StyledButton
-                onClick={() => setLocationFilter({ ...filter.location, state: null, city: null })}
+                onClick={() => handleLocationFilter({ ...filter.location, state: null, city: null })}
                 sx={{
                   mr: 1,
                   mb: 1,
@@ -83,25 +112,20 @@ const LocationFilters = () => {
                 </Typography>
               </StyledButton>
 
-              {availableFilters.states
-                .filter((state) => {
-                  // Find states in the selected country
-                  return revenueData.some((item) => item.country === filter.location.country && item.state === state);
-                })
-                .map((state) => (
-                  <StyledButton
-                    key={state}
-                    onClick={() => setLocationFilter({ ...filter.location, state, city: null })}
-                    sx={{
-                      mr: 1,
-                      mb: 1,
-                      background: filter.location.state === state ? '#0477DD !important' : null
-                    }}>
-                    <Typography color="white" textTransform="none">
-                      {state}
-                    </Typography>
-                  </StyledButton>
-                ))}
+              {getStatesForCountry(filter.location.country).map((state) => (
+                <StyledButton
+                  key={state}
+                  onClick={() => handleLocationFilter({ ...filter.location, state, city: null })}
+                  sx={{
+                    mr: 1,
+                    mb: 1,
+                    background: filter.location.state === state ? '#0477DD !important' : null
+                  }}>
+                  <Typography color="white" textTransform="none">
+                    {state}
+                  </Typography>
+                </StyledButton>
+              ))}
             </Box>
           </>
         )}
@@ -113,7 +137,7 @@ const LocationFilters = () => {
             </Typography>
             <Box display="flex" flexWrap="wrap" gap={1}>
               <StyledButton
-                onClick={() => setLocationFilter({ ...filter.location, city: null })}
+                onClick={() => handleLocationFilter({ ...filter.location, city: null })}
                 sx={{
                   mr: 1,
                   mb: 1,
@@ -124,25 +148,20 @@ const LocationFilters = () => {
                 </Typography>
               </StyledButton>
 
-              {availableFilters.cities
-                .filter((city) => {
-                  // Find cities in the selected state
-                  return revenueData.some((item) => item.state === filter.location.state && item.name === city);
-                })
-                .map((city) => (
-                  <StyledButton
-                    key={city}
-                    onClick={() => setLocationFilter({ ...filter.location, city })}
-                    sx={{
-                      mr: 1,
-                      mb: 1,
-                      background: filter.location.city === city ? '#0477DD !important' : null
-                    }}>
-                    <Typography color="white" textTransform="none">
-                      {city}
-                    </Typography>
-                  </StyledButton>
-                ))}
+              {getCitiesForState(filter.location.country, filter.location.state).map((city) => (
+                <StyledButton
+                  key={city}
+                  onClick={() => handleLocationFilter({ ...filter.location, city })}
+                  sx={{
+                    mr: 1,
+                    mb: 1,
+                    background: filter.location.city === city ? '#0477DD !important' : null
+                  }}>
+                  <Typography color="white" textTransform="none">
+                    {city}
+                  </Typography>
+                </StyledButton>
+              ))}
             </Box>
           </>
         )}

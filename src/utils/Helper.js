@@ -296,69 +296,179 @@ class Helper {
   }
 
   static formatPrice(value, currency) {
-    if (value !== null) {
-      let amount = value;
-      if (amount < 0) {
-        amount = 0;
-      }
+    // First check if value is valid
+    if (value === undefined || value === null || !Number.isFinite(parseFloat(value))) {
+      return '-'; // Return a dash for invalid values
+    }
 
-      let currencyCode = 'USD'; // Default currency code
+    let amount = parseFloat(value);
+    if (amount < 0) {
+      amount = 0;
+    }
 
-      // Safely extract currency code
-      if (currency) {
-        if (typeof currency === 'string') {
-          currencyCode = currency;
-        } else if (currency.code && typeof currency.code === 'string') {
-          currencyCode = currency.code;
-        }
-      }
+    let currencyCode = 'USD'; // Default currency code
 
-      let fractionDigits = amount === 0 ? 2 : 3 - Math.ceil(Math.log10(amount));
-      if (fractionDigits < 0) {
-        fractionDigits = 0;
+    // Safely extract currency code
+    if (currency) {
+      if (typeof currency === 'string') {
+        currencyCode = currency;
+      } else if (currency.code && typeof currency.code === 'string') {
+        currencyCode = currency.code;
       }
-      if (fractionDigits > 10) {
-        fractionDigits = 10;
-      }
-      if (fractionDigits === 1) {
-        fractionDigits = 2;
-      }
-      if (amount > 1e6) {
-        fractionDigits = 2;
-      }
-      if (!Number.isFinite(fractionDigits)) {
-        fractionDigits = 0;
-      }
+    }
 
-      // Create the formatting options
-      const formatOptions = {
-        style: 'currency',
-        currency: currencyCode,
-        currencyDisplay: 'narrowSymbol',
-        minimumFractionDigits: fractionDigits,
-        maximumFractionDigits: fractionDigits
-      };
+    let fractionDigits = amount === 0 ? 2 : 3 - Math.ceil(Math.log10(amount));
+    if (fractionDigits < 0) {
+      fractionDigits = 0;
+    }
+    if (fractionDigits > 10) {
+      fractionDigits = 10;
+    }
+    if (fractionDigits === 1) {
+      fractionDigits = 2;
+    }
+    if (amount > 1e6) {
+      fractionDigits = 2;
+    }
+    if (!Number.isFinite(fractionDigits)) {
+      fractionDigits = 0;
+    }
 
-      if (amount > 1e6) {
-        formatOptions.notation = 'compact';
-      }
+    // Create the formatting options
+    const formatOptions = {
+      style: 'currency',
+      currency: currencyCode,
+      currencyDisplay: 'narrowSymbol',
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits
+    };
 
+    if (amount > 1e6) {
+      formatOptions.notation = 'compact';
+    }
+
+    try {
+      return amount.toLocaleString(undefined, formatOptions);
+    } catch (error) {
+      // Fallback if there's an error
+      formatOptions.currencyDisplay = 'symbol';
       try {
         return amount.toLocaleString(undefined, formatOptions);
       } catch (error) {
-        // Fallback if there's an error
-        formatOptions.currencyDisplay = 'symbol';
-        try {
-          return amount.toLocaleString(undefined, formatOptions);
-        } catch (error) {
-          // Last resort fallback - just return the number with a dollar sign
-          return `$${amount.toFixed(fractionDigits)}`;
-        }
+        // Last resort fallback - just return the number with a dollar sign
+        return `$${amount.toFixed(fractionDigits)}`;
       }
     }
-    return '-';
   }
 
+
+  static calculateRevenueRadius(location, sizeFactor, timeFrame, metricType) {
+    // Default to revenue if metricType isn't specified or is invalid
+    const effectiveMetricType = ['revenue', 'profit', 'growth'].includes(metricType) ? metricType : 'revenue';
+
+    // Get the appropriate metric value
+    let value;
+
+    try {
+      if (effectiveMetricType === 'growth') {
+        // For growth, use absolute percentage value for sizing
+        const growthValue = Math.abs(parseFloat(location.metrics.growth[timeFrame]) || 0);
+        // Scale growth percentage to a reasonable bubble size (percentage * multiplier)
+        value = growthValue * 5000; // Adjust multiplier as needed
+      }
+      else {
+        // For revenue or profit, use the raw value
+        value = location.metrics[effectiveMetricType][timeFrame] || 0;
+      }
+    } catch (error) {
+      console.warn(`Error calculating ${effectiveMetricType} for ${timeFrame}:`, error);
+      value = 0;
+    }
+
+    // Apply logarithmic scaling for better visual representation
+    // This prevents extremely large values from dominating the visualization
+    // while still maintaining proportional relationship
+    if (value > 0) {
+      return Math.max(10, Math.log10(value) * 5);
+    }
+
+    return 10; // Minimum size for bubbles
+  }
+
+  static calculateRevenueColorValue(location, colorFactor, timeFrame) {
+    if (colorFactor === 'neutral') {
+      return 0;
+    }
+
+    if (colorFactor === 'performance') {
+      // Use growth rate for color
+      try {
+        return Helper.clamp(parseFloat(location.metrics.growth[timeFrame]), -20, 20);
+      } catch (error) {
+        console.warn(`Error calculating growth for ${timeFrame}:`, error);
+        return 0;
+      }
+    }
+
+    return 0;
+  }
+
+  static generateRevenueContent(location, contentTemplate, timeFrame, currency) {
+    const currencyCode = typeof currency === 'string' ? currency : (currency?.code || 'USD');
+
+    // If the location has a pre-formatted display value, use it
+    if (location.displayValue) {
+      return location.displayValue;
+    }
+
+    // Otherwise, format the content based on template
+    switch (contentTemplate) {
+      case 'revenue':
+        try {
+          // Format as compact currency for better readability in bubbles
+          const value = location.metrics.revenue[timeFrame];
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currencyCode,
+            notation: 'compact',
+            maximumFractionDigits: 1
+          }).format(value);
+        } catch (error) {
+          return '$0';
+        }
+
+      case 'profit':
+        try {
+          // Format as compact currency for better readability in bubbles
+          const value = location.metrics.profit[timeFrame];
+          return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currencyCode,
+            notation: 'compact',
+            maximumFractionDigits: 1
+          }).format(value);
+        } catch (error) {
+          return '$0';
+        }
+
+      case 'growth':
+      case 'performance':
+        try {
+          // Format with 1 decimal place for percentages
+          const value = parseFloat(location.metrics.growth[timeFrame]);
+          return `${value.toFixed(1)}%`;
+        } catch (error) {
+          return '0%';
+        }
+
+      // Let name display be handled by the bubble's name property
+      case 'name':
+      case 'state':
+      case 'country':
+      default:
+        return ''; // Return empty string to avoid duplicating the name
+    }
+  }
 }
 
 export default Helper;

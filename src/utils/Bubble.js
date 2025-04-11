@@ -251,12 +251,9 @@ class Bubble {
     // Set visibility based on whether radius is above zero
     this.visible = this.radius > 0;
   }
-
-  // Rerender the bubble if its fingerprint has changed
   rerender(radius) {
     const image = this.lazyImage();
-    // Ensure we never render with a radius below minimum
-    const roundedRadius = Math.max(Constants.minRadius, Math.round(radius));
+    const roundedRadius = Math.round(radius);
     const shouldRenderBorder = this.renderFavoriteBorder && useConfigStore.getState().favorites.includes(this.currency.id);
     const fingerprint = `${this.color} ${roundedRadius} ${this.content} ${Boolean(image)} ${shouldRenderBorder}`;
 
@@ -280,11 +277,25 @@ class Bubble {
         this.canvas.stroke(borderColor, Constants.bubbleBorder);
       }
 
+      // Only render text for larger bubbles
       const isLarge = roundedRadius > 30;
-      const imageSize = roundedRadius * (isLarge ? 0.55 : 1.2);
+
+      // Adjust image size and position based on bubble size
+      let imageSize;
+      let imageY;
+
+      if (isLarge) {
+        // Smaller image for large bubbles to make room for text
+        imageSize = roundedRadius * 0.45;
+        imageY = roundedRadius * 0.4; // Position image in the upper half
+      } else {
+        // For small bubbles, fill most of the space with the image
+        imageSize = roundedRadius * 1.2;
+        imageY = (diameter - imageSize) * 0.5;
+      }
+
       const imageWidth = imageSize * (image ? image.width / image.height : 1);
       const imageX = 0.5 * (diameter - imageWidth);
-      const imageY = (diameter - imageSize) * (isLarge ? 0.14 : 0.5);
 
       if (image) {
         this.canvas.drawImage(image, imageX, imageY, imageWidth, imageSize);
@@ -295,16 +306,59 @@ class Bubble {
         this.canvas.stroke('white', 1);
       }
 
+      // Only render text for larger bubbles
       if (isLarge) {
+        // Configure text rendering
         this.canvas.context.textAlign = 'center';
         this.canvas.context.fillStyle = 'white';
 
-        const symbol = this.currency.symbol || this.currency.name?.substring(0, 2) || '';
-        const symbolSize = roundedRadius * (symbol.length < 5 ? 0.55 : 0.35);
-        this.canvas.fillText(symbol, roundedRadius, 1.25 * roundedRadius, symbolSize);
+        // Get location name (no longer using symbol to avoid duplication)
+        const name = this.currency.name || '';
 
-        const contentSize = roundedRadius * ((this.content || '').length > 8 ? 0.24 : 0.3);
-        this.canvas.fillText(this.content || '', roundedRadius, 1.65 * roundedRadius, contentSize);
+        // Determine max width for text to fit in bubble
+        const maxTextWidth = roundedRadius * 1.8;
+
+        // Function to measure and truncate text if needed
+        const fitText = (text, maxWidth, fontSize) => {
+          this.canvas.context.font = `${Math.ceil(fontSize)}px Arial`;
+          let measuredWidth = this.canvas.context.measureText(text).width;
+
+          // If text is too wide, truncate with ellipsis
+          if (measuredWidth > maxWidth) {
+            let truncated = text;
+            while (measuredWidth > maxWidth && truncated.length > 3) {
+              truncated = truncated.slice(0, -1);
+              measuredWidth = this.canvas.context.measureText(truncated + '...').width;
+            }
+            return truncated + '...';
+          }
+          return text;
+        };
+
+        // Calculate font sizes based on bubble radius
+        let nameFontSize;
+        let contentFontSize;
+
+        if (roundedRadius < 50) {
+          // For medium bubbles, just show name
+          nameFontSize = roundedRadius * 0.25;
+          const fittedName = fitText(name, maxTextWidth, nameFontSize);
+          this.canvas.fillText(fittedName, roundedRadius, roundedRadius * 1.35, nameFontSize);
+        } else {
+          // For large bubbles, show name and numeric value
+          nameFontSize = roundedRadius * 0.22;
+          contentFontSize = roundedRadius * 0.18;
+
+          // Fit and draw the name
+          const fittedName = fitText(name, maxTextWidth, nameFontSize);
+          this.canvas.fillText(fittedName, roundedRadius, roundedRadius * 1.2, nameFontSize);
+
+          // Draw the numeric value (e.g., revenue amount) if provided
+          if (this.content) {
+            const fittedContent = fitText(this.content, maxTextWidth, contentFontSize);
+            this.canvas.fillText(fittedContent, roundedRadius, roundedRadius * 1.5, contentFontSize);
+          }
+        }
       }
 
       this.canvas.end();

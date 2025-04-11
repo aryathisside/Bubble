@@ -556,16 +556,34 @@ const HeaderTabs = () => {
   const setConfig = useConfigStore((state) => state.setConfig);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
+  // Add state for the main filters panel
+  const [mainFiltersOpen, setMainFiltersOpen] = useState(false);
+
   // State for time & metrics menu
   const [timeMenuAnchor, setTimeMenuAnchor] = useState(null);
   const [metricMenuAnchor, setMetricMenuAnchor] = useState(null);
   const timeMenuOpen = Boolean(timeMenuAnchor);
   const metricMenuOpen = Boolean(metricMenuAnchor);
 
+  // State for industry menu
+  const [industryMenuAnchor, setIndustryMenuAnchor] = useState(null);
+  const industryMenuOpen = Boolean(industryMenuAnchor);
+
+  // State for customer type menu
+  const [customerTypeMenuAnchor, setCustomerTypeMenuAnchor] = useState(null);
+  const customerTypeMenuOpen = Boolean(customerTypeMenuAnchor);
+
   // Get time & metric settings from store
   const filter = useDataStore((state) => state.filter);
   const setTimeFrame = useDataStore((state) => state.setTimeFrame);
   const setMetricType = useDataStore((state) => state.setMetricType);
+
+  // Get available filter settings
+  const setCustomerFilter = useDataStore((state) => state.setCustomerFilter);
+  const setFinancialFilter = useDataStore((state) => state.setFinancialFilter);
+  const setSalesFilter = useDataStore((state) => state.setSalesFilter);
+  const setPriorityFilter = useDataStore((state) => state.setPriorityFilter);
+  const setAiAdoptionFilter = useDataStore((state) => state.setAiAdoptionFilter);
 
   const calculateVarient = (item) => {
     const weight = Helper.calculateConfigurationWeight(item, currencies);
@@ -614,6 +632,15 @@ const HeaderTabs = () => {
 
   const toggleFilters = () => {
     setFiltersExpanded(!filtersExpanded);
+    // Close the other panel if it's open
+    if (mainFiltersOpen) setMainFiltersOpen(false);
+  };
+
+  // Handle main filters toggle
+  const toggleMainFilters = () => {
+    setMainFiltersOpen(!mainFiltersOpen);
+    // Close the other panel if it's open
+    if (filtersExpanded) setFiltersExpanded(false);
   };
 
   // Handle time menu click
@@ -648,6 +675,34 @@ const HeaderTabs = () => {
     handleMetricMenuClose();
   };
 
+  // Handle industry menu
+  const handleIndustryMenuClick = (event) => {
+    setIndustryMenuAnchor(event.currentTarget);
+  };
+
+  const handleIndustryMenuClose = () => {
+    setIndustryMenuAnchor(null);
+  };
+
+  const handleIndustrySelect = (industry) => {
+    setCustomerFilter({ industry });
+    handleIndustryMenuClose();
+  };
+
+  // Handle customer type menu
+  const handleCustomerTypeMenuClick = (event) => {
+    setCustomerTypeMenuAnchor(event.currentTarget);
+  };
+
+  const handleCustomerTypeMenuClose = () => {
+    setCustomerTypeMenuAnchor(null);
+  };
+
+  const handleCustomerTypeSelect = (type) => {
+    setCustomerFilter({ type });
+    handleCustomerTypeMenuClose();
+  };
+
   // Format time frame for display
   const formatTimeFrame = (timeFrame) => {
     const mapping = {
@@ -668,6 +723,19 @@ const HeaderTabs = () => {
       growth: 'Growth'
     };
     return mapping[metricType] || 'Revenue';
+  };
+
+  // Helper functions for filter panel
+  const handleCustomerFilter = (filterType, value) => {
+    setCustomerFilter({ [filterType]: value });
+  };
+
+  const handleFinancialFilter = (filterType, value) => {
+    setFinancialFilter({ [filterType]: value });
+  };
+
+  const handleSalesFilter = (filterType, value) => {
+    setSalesFilter({ [filterType]: value });
   };
 
   return (
@@ -729,7 +797,22 @@ const HeaderTabs = () => {
             <Add />
           </StyledIconButton>
         </Box>
-
+        <Box p={1}>
+          <StyledButton onClick={toggleMainFilters} sx={{ background: mainFiltersOpen ? '#0676DB !important' : null }}>
+            <Stack direction="row" gap={1} alignItems="center">
+              <FilterList />
+              <Typography color="white" fontWeight="bold" textTransform="none">
+                Filters
+              </Typography>
+              <KeyboardArrowDown
+                sx={{
+                  transition: 'transform 0.4s',
+                  transform: mainFiltersOpen ? 'rotateZ(180deg)' : ''
+                }}
+              />
+            </Stack>
+          </StyledButton>
+        </Box>
         {/* Location Filter Button */}
         <Box p={1} position="relative">
           <StyledButton onClick={toggleFilters} sx={{ background: filtersExpanded ? '#0676DB !important' : null }}>
@@ -914,22 +997,305 @@ const HeaderTabs = () => {
         <ConfigurationDialog />
       </Stack>
 
-      {/* Only show LocationFilters in the dropdown */}
-      <Grow in={filtersExpanded}>
+      {/* Location filters dropdown */}
+      {filtersExpanded && (
         <Box
           sx={{
-            display: filtersExpanded ? 'block' : 'none',
+            position: 'absolute',
+            top: isMobile ? '60px' : '70px',
+            left: 0,
+            right: 0,
             background: '#444444e6',
             backdropFilter: 'blur(8px)',
             mx: 2,
-            mb: 2,
             borderRadius: 1,
             boxShadow: '0px 0px 7px 7px #00000027',
-            p: 2
+            p: 2,
+            zIndex: 100
           }}>
           <LocationFilters />
         </Box>
-      </Grow>
+      )}
+
+      {/* Main filters dropdown - with all advanced filters */}
+      {mainFiltersOpen && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: isMobile ? '60px' : '70px',
+            left: 0,
+            right: 0,
+            background: '#444444e6',
+            backdropFilter: 'blur(8px)',
+            mx: 2,
+            borderRadius: 1,
+            boxShadow: '0px 0px 7px 7px #00000027',
+            p: 2,
+            zIndex: 100,
+            maxHeight: 'calc(100vh - 100px)',
+            overflow: 'auto'
+          }}>
+          <Typography variant="h6" color="#CFA935" mb={2}>
+            Advanced Filters
+          </Typography>
+
+          {/* Customer Filters Section */}
+          <Box mb={3}>
+            <Typography fontWeight="bold" color="white" mb={1}>
+              Customer Filters
+            </Typography>
+            <Stack direction="row" spacing={2} flexWrap="wrap" mb={2}>
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Industry
+                </Typography>
+                <StyledButton fullWidth size="small" onClick={handleIndustryMenuClick}>
+                  {filter.customer?.industry || 'Select Industry'}
+                </StyledButton>
+                <Menu
+                  anchorEl={industryMenuAnchor}
+                  open={industryMenuOpen}
+                  onClose={handleIndustryMenuClose}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left'
+                  }}
+                  PaperProps={{
+                    sx: {
+                      backgroundColor: '#333',
+                      color: 'white',
+                      minWidth: '150px'
+                    }
+                  }}>
+                  <MenuItem onClick={() => handleIndustrySelect('Healthcare')} selected={filter.customer?.industry === 'Healthcare'}>
+                    Healthcare
+                  </MenuItem>
+                  <MenuItem onClick={() => handleIndustrySelect('Finance')} selected={filter.customer?.industry === 'Finance'}>
+                    Finance
+                  </MenuItem>
+                  <MenuItem onClick={() => handleIndustrySelect('Technology')} selected={filter.customer?.industry === 'Technology'}>
+                    Technology
+                  </MenuItem>
+                  <MenuItem onClick={() => handleIndustrySelect('Education')} selected={filter.customer?.industry === 'Education'}>
+                    Education
+                  </MenuItem>
+                  <MenuItem onClick={() => handleIndustrySelect('Manufacturing')} selected={filter.customer?.industry === 'Manufacturing'}>
+                    Manufacturing
+                  </MenuItem>
+                  <MenuItem onClick={() => handleIndustrySelect('Retail')} selected={filter.customer?.industry === 'Retail'}>
+                    Retail
+                  </MenuItem>
+                </Menu>
+              </Box>
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Customer Type
+                </Typography>
+                <StyledButton fullWidth size="small" onClick={handleCustomerTypeMenuClick}>
+                  {filter.customer?.type || 'Select Type'}
+                </StyledButton>
+                <Menu
+                  anchorEl={customerTypeMenuAnchor}
+                  open={customerTypeMenuOpen}
+                  onClose={handleCustomerTypeMenuClose}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left'
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left'
+                  }}
+                  PaperProps={{
+                    sx: {
+                      backgroundColor: '#333',
+                      color: 'white',
+                      minWidth: '150px'
+                    }
+                  }}>
+                  <MenuItem onClick={() => handleCustomerTypeSelect('Corporate')} selected={filter.customer?.type === 'Corporate'}>
+                    Corporate
+                  </MenuItem>
+                  <MenuItem onClick={() => handleCustomerTypeSelect('Government')} selected={filter.customer?.type === 'Government'}>
+                    Government
+                  </MenuItem>
+                  <MenuItem onClick={() => handleCustomerTypeSelect('Non-Profit')} selected={filter.customer?.type === 'Non-Profit'}>
+                    Non-Profit
+                  </MenuItem>
+                  <MenuItem onClick={() => handleCustomerTypeSelect('Academic')} selected={filter.customer?.type === 'Academic'}>
+                    Academic
+                  </MenuItem>
+                </Menu>
+              </Box>
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Brand
+                </Typography>
+                <StyledButton
+                  fullWidth
+                  size="small"
+                  onClick={() => {
+                    // You can add state and menu handlers for this like the others
+                    setCustomerFilter({ brand: 'NetCom Learning' });
+                  }}>
+                  {filter.customer?.brand || 'Select Brand'}
+                </StyledButton>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={2} flexWrap="wrap">
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Account Status
+                </Typography>
+                <StyledButton
+                  fullWidth
+                  size="small"
+                  onClick={() => {
+                    // You can add state and menu handlers for this like the others
+                    setCustomerFilter({ status: 'Active' });
+                  }}>
+                  {filter.customer?.status || 'Select Status'}
+                </StyledButton>
+              </Box>
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  AI Adoption Level
+                </Typography>
+                <StyledButton
+                  fullWidth
+                  size="small"
+                  onClick={() => {
+                    // You can add state and menu handlers for this like the others
+                    setAiAdoptionFilter('Exploring');
+                  }}>
+                  {filter.aiAdoption || 'Select Level'}
+                </StyledButton>
+              </Box>
+            </Stack>
+          </Box>
+
+          {/* Financial Filters Section */}
+          <Box mb={3}>
+            <Typography fontWeight="bold" color="white" mb={1}>
+              Financial Filters
+            </Typography>
+            <Stack direction="row" spacing={2} flexWrap="wrap">
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Revenue Range
+                </Typography>
+                <StyledButton fullWidth size="small" onClick={() => handleFinancialFilter('revenueRange', '100kTo1m')}>
+                  {filter.financial?.revenueRange
+                    ? filter.financial.revenueRange === 'under100k'
+                      ? 'Under $100K'
+                      : filter.financial.revenueRange === '100kTo1m'
+                        ? '$100K - $1M'
+                        : filter.financial.revenueRange === '1mTo10m'
+                          ? '$1M - $10M'
+                          : filter.financial.revenueRange === 'over10m'
+                            ? 'Over $10M'
+                            : 'Select Range'
+                    : 'Select Range'}
+                </StyledButton>
+              </Box>
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Deal Size
+                </Typography>
+                <StyledButton fullWidth size="small" onClick={() => handleFinancialFilter('dealSize', 'medium')}>
+                  {filter.financial?.dealSize
+                    ? filter.financial.dealSize === 'small'
+                      ? 'Small'
+                      : filter.financial.dealSize === 'medium'
+                        ? 'Medium'
+                        : filter.financial.dealSize === 'large'
+                          ? 'Large'
+                          : filter.financial.dealSize === 'enterprise'
+                            ? 'Enterprise'
+                            : 'Select Size'
+                    : 'Select Size'}
+                </StyledButton>
+              </Box>
+            </Stack>
+          </Box>
+
+          {/* Sales Filters Section */}
+          <Box mb={3}>
+            <Typography fontWeight="bold" color="white" mb={1}>
+              Sales Filters
+            </Typography>
+            <Stack direction="row" spacing={2} flexWrap="wrap" mb={2}>
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Sales Rep
+                </Typography>
+                <StyledButton fullWidth size="small" onClick={() => setSalesFilter({ rep: 'John Smith' })}>
+                  {filter.sales?.rep || 'Select Rep'}
+                </StyledButton>
+              </Box>
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Territory
+                </Typography>
+                <StyledButton fullWidth size="small" onClick={() => setSalesFilter({ territory: 'East Coast' })}>
+                  {filter.sales?.territory || 'Select Territory'}
+                </StyledButton>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={2} flexWrap="wrap">
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Opportunity Stage
+                </Typography>
+                <StyledButton fullWidth size="small" onClick={() => setSalesFilter({ opportunityStage: 'Proposal' })}>
+                  {filter.sales?.opportunityStage || 'Select Stage'}
+                </StyledButton>
+              </Box>
+              <Box flex={1} minWidth="200px">
+                <Typography color="#ccc" fontSize="0.9rem" mb={0.5}>
+                  Engagement Recency
+                </Typography>
+                <StyledButton fullWidth size="small" onClick={() => setSalesFilter({ engagementRecency: 'last30' })}>
+                  {filter.sales?.engagementRecency
+                    ? filter.sales.engagementRecency === 'last30'
+                      ? 'Last 30 Days'
+                      : filter.sales.engagementRecency === '30to90'
+                        ? '30-90 Days'
+                        : filter.sales.engagementRecency === 'over90'
+                          ? 'Over 90 Days'
+                          : 'Select Recency'
+                    : 'Select Recency'}
+                </StyledButton>
+              </Box>
+            </Stack>
+          </Box>
+
+          {/* Priority Filter Section */}
+          <Box>
+            <Typography fontWeight="bold" color="white" mb={1}>
+              Other Filters
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              <Box>
+                <StyledButton
+                  size="small"
+                  sx={{
+                    background: filter.priority?.isCeoPriority ? '#0676DB !important' : null
+                  }}
+                  onClick={() => setPriorityFilter(!filter.priority?.isCeoPriority)}>
+                  <Typography color="white" fontWeight="bold" textTransform="none">
+                    CEO Priority
+                  </Typography>
+                </StyledButton>
+              </Box>
+            </Stack>
+          </Box>
+        </Box>
+      )}
     </Stack>
   );
 };

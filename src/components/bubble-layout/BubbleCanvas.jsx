@@ -513,6 +513,8 @@ const BubbleCanvas = () => {
   useEffect(() => {
     let filtered = [...revenueData];
     console.log('Applying filters:', filter);
+    console.log('Customer filter brand:', filter.customer.brand);
+    console.log('Brands in data:', [...new Set(revenueData.map((item) => item.brand))]);
 
     // Location Filters
     if (filter.location?.country) {
@@ -536,9 +538,10 @@ const BubbleCanvas = () => {
       filtered = filtered.filter((item) => item.customer_type === filter.customer.type);
     }
     if (filter.customer?.brand) {
+      const beforeCount = filtered.length;
       filtered = filtered.filter((item) => item.brand === filter.customer.brand);
+      console.log(`Filtered by brand: ${beforeCount} -> ${filtered.length}`);
     }
-
     // Inside the useEffect for filtering (continued from previous code)
     if (filter.customer?.status) {
       filtered = filtered.filter((item) => item.account_status === filter.customer.status);

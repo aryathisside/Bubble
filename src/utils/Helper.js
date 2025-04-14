@@ -373,7 +373,7 @@ class Helper {
       if (effectiveMetricType === 'growth') {
         // For growth, use absolute percentage value for sizing
         const growthValue = Math.abs(parseFloat(location.metrics.growth[timeFrame]) || 0);
-        // Scale growth percentage to a reasonable bubble size (percentage * multiplier)
+        // Scale growth percentage to a reasonable bubble size
         value = growthValue * 5000; // Adjust multiplier as needed
       }
       else {
@@ -386,13 +386,13 @@ class Helper {
     }
 
     // Apply logarithmic scaling for better visual representation
-    // This prevents extremely large values from dominating the visualization
-    // while still maintaining proportional relationship
+    // This makes the size difference less extreme between very large and small values
+    // while still maintaining proportional relationships
     if (value > 0) {
-      return Math.max(10, Math.log10(value) * 5);
+      return Math.max(10, Math.log10(value) * 10);
     }
 
-    return 10; // Minimum size for bubbles
+    return 10; // Minimum size for bubbles with 0 or negative value
   }
 
   static calculateRevenueColorValue(location, colorFactor, timeFrame) {
@@ -401,9 +401,10 @@ class Helper {
     }
 
     if (colorFactor === 'performance') {
-      // Use growth rate for color
       try {
-        return Helper.clamp(parseFloat(location.metrics.growth[timeFrame]), -20, 20);
+        const growthValue = parseFloat(location.metrics.growth[timeFrame]);
+        // Return the actual growth value to preserve its sign for coloring
+        return growthValue;
       } catch (error) {
         console.warn(`Error calculating growth for ${timeFrame}:`, error);
         return 0;

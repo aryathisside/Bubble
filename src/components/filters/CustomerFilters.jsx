@@ -16,9 +16,12 @@ const CustomerFilters = () => {
   // Get available values from data
   useEffect(() => {
     if (revenueData.length > 0) {
+      const uniqueBrands = [...new Set(revenueData.map((item) => item.brand).filter(Boolean))];
+
       setAvailableIndustries([...new Set(revenueData.map((item) => item.industry).filter(Boolean))]);
       setAvailableTypes([...new Set(revenueData.map((item) => item.customer_type).filter(Boolean))]);
-      setAvailableBrands([...new Set(revenueData.map((item) => item.brand).filter(Boolean))]);
+      console.log('Available brands:', uniqueBrands);
+      setAvailableBrands(uniqueBrands);
       setAvailableStatuses([...new Set(revenueData.map((item) => item.account_status).filter(Boolean))]);
     }
   }, [revenueData]);
@@ -119,7 +122,7 @@ const CustomerFilters = () => {
             sx={{
               mr: 1,
               mb: 1,
-              background: filter.customer.brand === brand ? '#0477DD !important' : null
+              background: filter.customer?.brand === brand ? '#0477DD !important' : null
             }}>
             <Typography color="white" textTransform="none">
               {brand}

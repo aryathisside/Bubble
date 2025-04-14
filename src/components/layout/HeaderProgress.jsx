@@ -178,7 +178,7 @@ import { useEffect, useRef, useState } from 'react';
 import Helper from '../../utils/Helper';
 import useConfigStore from '../../store/useConfigStore';
 import useDataStore from '../../store/useDataStore';
-import { generateRevenueData } from '../../data/revenueData'; // Import your static data generator
+// import { generateRevenueData } from '../../data/revenueData'; // Import your static data generator
 
 const HeaderProgress = () => {
   const config = useConfigStore((state) => state.configuration);
@@ -197,17 +197,30 @@ const HeaderProgress = () => {
   const REFRESH_INTERVAL = 30000; // 30 seconds in milliseconds
 
   // Load data in the background without blocking UI
-  const loadDataInBackground = () => {
+  const loadDataInBackground = async () => {
     // Show loading initially, but don't block UI
     setLoading(true);
 
-    // Generate data immediately instead of after delay
-    // For currencies (if you still need this data)
     const staticCurrencyData = []; // Add your static currency data here if needed
     setCurrencies(staticCurrencyData);
 
     // For revenue data
-    const revenueData = generateRevenueData();
+
+    // const revenueData = generateRevenueData();
+    const response = await fetch('http://localhost:3004/api/company/data');
+    // Add this to check the response content
+    const text = await response.text();
+    console.log('Raw response:', text.substring(0, 100)); // Log first 100 chars of response
+
+    // Check if it looks like HTML
+    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+      console.error('Received HTML instead of JSON. API endpoint may not exist or returned an error page.');
+      set({ loading: false });
+      return [];
+    }
+
+    const revenueData = JSON.parse(text);
+
     setRevenueData(revenueData);
 
     // Set loading to false to signal completion

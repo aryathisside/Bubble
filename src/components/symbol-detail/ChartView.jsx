@@ -554,18 +554,16 @@ const ChartView = () => {
     setFetchError(false);
 
     try {
-      // This would be replaced with your actual revenue data fetch
-      // For now we'll simulate it with a timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const revenueHistory = [];
 
       // Create sample chart data based on revenue metrics
-      const revenueHistory = [];
       const startDate = new Date();
 
       // Number of data points based on period
       let dataPoints = 12;
       let dateIncrement = (date) => date.setMonth(date.getMonth() - 1);
 
+      // Adjust based on period
       if (period === 'week') {
         dataPoints = 52;
         dateIncrement = (date) => date.setDate(date.getDate() - 7);
@@ -584,16 +582,17 @@ const ChartView = () => {
         const date = new Date(currentDate);
         dateIncrement(date);
 
-        // Get base value from the metrics, defaulting to 'month' if the period isn't available
+        // Get base value
         const baseValue = getRevenueValue('revenue', period) || getRevenueValue('revenue', 'month');
 
-        // Add some variation (more for longer periods, less for shorter ones)
+        // Add some variation
         const variationFactor = period === 'year' ? 0.15 : period === 'month' ? 0.05 : 0.02;
         const value = baseValue * (1 + (Math.random() * variationFactor - variationFactor / 2));
 
+        // Use the format expected by Chart.js
         revenueHistory.unshift({
-          date: date.toISOString(),
-          value
+          p: value, // Price/value
+          t: date.getTime() / 1000 // Unix timestamp in seconds
         });
 
         currentDate.setTime(date.getTime());
@@ -846,7 +845,7 @@ const ChartView = () => {
                       </Scrollbar>
                     )}
                   </Box>
-                  <Box p={2} mb={2} bgcolor="#1E2130" borderRadius="4px">
+                  {/* <Box p={2} mb={2} bgcolor="#1E2130" borderRadius="4px">
                     <Typography variant="subtitle2" color="#CFA935" mb={1}>
                       Customer Details
                     </Typography>
@@ -887,7 +886,7 @@ const ChartView = () => {
                         CEO Priority Account
                       </Typography>
                     )}
-                  </Box>
+                  </Box> */}
                 </Grid>
               </Grid>
             </DialogContent>

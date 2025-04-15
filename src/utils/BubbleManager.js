@@ -890,6 +890,528 @@
 // export default BubbleManager;
 
 
+// /* eslint-disable no-cond-assign */
+// /* eslint-disable no-continue */
+// /* eslint-disable no-restricted-syntax */
+// import BubbleNew from './Bubble';
+// import CanvasManager from './CanvasManager';
+// import EventEmitter from './EventEmitter';
+// import Helper from './Helper';
+
+// // Constants
+// const Constants = {
+//   bubblePadding: 10,
+//   bubbleBorder: 2,
+//   bubbleHitbox: 10
+// };
+
+// // Check if the application is embedded
+// const isEmbedded = false;
+
+// class BubbleManager extends CanvasManager {
+//   constructor(canvasElement, properties) {
+//     super(canvasElement);
+//     this.needsRecalculation = false; // Flag to indicate if bubble properties need recalculation
+//     this.recalculationCount = 0; // Count of recalculations
+//     this.latestPush = 0; // Timestamp of the latest data push
+//     this.bubbles = []; // Array of bubbles
+//     this.bubblesDict = {}; // Dictionary of bubbles by currency ID
+//     this.pointerX = -1; // X position of the pointer
+//     this.pointerY = -1; // Y position of the pointer
+//     this.hoveredBubble = null; // Currently hovered bubble
+//     this.draggedBubble = null; // Currently dragged bubble
+//     this.possibleSelectedBubble = null; // Possible selected bubble
+//     this.timePointerDown = 0; // Timestamp of the pointer down event
+//     this.timeLastWakeUp = Date.now(); // Timestamp of the last wake-up
+//     this.selectedCurrencyId = null; // ID of the selected currency
+//     this.renderFavoriteBorder = true; // Flag to render favorite border
+//     this.eventSelect = new EventEmitter(); // Event emitter for selection events
+//     this.animationFrameId = null; // ID of the animation frame request
+//     this.isFirstLoad = true; // Flag to track first data load
+
+//     this.eventResize.register(() => {
+//       this.needsRecalculation = true;
+//       this.requestFrame();
+//     });
+
+//     this.eventFrame.register((deltaTime) => {
+//       if (this.needsRecalculation) {
+//         this.recalculate();
+//       }
+//       this.update(deltaTime);
+//       this.render();
+
+//       const timeSinceLastWakeUp = Date.now() - this.timeLastWakeUp;
+//       const delay = Math.round(timeSinceLastWakeUp / 50 - 20); // Changed from 150 to 50   
+//       const adjustedDelay = Math.max(0, Math.min(delay, 200)); // Increased from 80 to 200
+
+//       if (adjustedDelay > 0 && !isEmbedded) {
+//         this.animationFrameId = window.setTimeout(() => this.requestFrame(), adjustedDelay);
+//       } else {
+//         setTimeout(() => this.requestFrame(), 50); // Add 50ms minimum delay
+//       }
+//     });
+
+//     this.properties = properties || {
+//       size: 'volume',
+//       color: 'performance',
+//       colors: 'red-green',
+//       period: 'month',
+//       timeFrame: 'month',
+//       metricType: 'revenue',
+//       content: 'revenue',
+//       baseCurrency: { code: 'USD' }
+//     };
+
+//     canvasElement.addEventListener('pointerdown', (event) => this.handlePointerDown(event), { passive: false });
+//     canvasElement.addEventListener('pointermove', (event) => this.handlePointerMove(event));
+//     canvasElement.addEventListener('touchmove', (event) => this.handleTouchMove(event), { passive: false });
+//     canvasElement.addEventListener('pointerup', (event) => this.handlePointerUp(event));
+//     canvasElement.addEventListener('pointercancel', () => this.handlePointerCancel());
+//   }
+
+//   // Update the pointer's position
+//   updatePointerPosition(event) {
+//     this.pointerX = event.offsetX * window.devicePixelRatio;
+//     this.pointerY = event.offsetY * window.devicePixelRatio;
+//   }
+
+//   // Update the last wake-up time
+//   wakeUp() {
+//     this.timeLastWakeUp = Date.now();
+//   }
+
+//   // Get the bubble closest to the pointer
+//   getFocusedBubble() {
+//     for (let i = this.bubbles.length - 1; i >= 0; i -= 1) {
+//       const bubble = this.bubbles[i];
+//       if (bubble.visible) {
+//         const dx = bubble.posX - this.pointerX;
+//         const dy = bubble.posY - this.pointerY;
+//         const distanceSquared = dx * dx + dy * dy;
+//         const hitboxRadius = bubble.radius + Constants.bubbleHitbox;
+//         if (hitboxRadius * hitboxRadius >= distanceSquared) {
+//           return bubble;
+//         }
+//       }
+//     }
+//     return null;
+//   }
+
+//   // Handle the pointer down event
+//   handlePointerDown(event) {
+//     if (event.isPrimary) {
+//       this.timePointerDown = Date.now();
+//       this.canvas.setPointerCapture(event.pointerId);
+//       if (event.pointerType === 'mouse') {
+//         this.draggedBubble = this.hoveredBubble;
+//       } else {
+//         this.updatePointerPosition(event);
+//         this.draggedBubble = this.getFocusedBubble();
+//       }
+//       if (this.draggedBubble) {
+//         this.possibleSelectedBubble = this.draggedBubble;
+//       } else {
+//         this.launchExplosion();
+//       }
+//     }
+//   }
+
+//   // Handle the pointer move event
+//   handlePointerMove(event) {
+//     if (event.isPrimary) {
+//       this.updatePointerPosition(event);
+//       const focusedBubble = this.getFocusedBubble();
+//       if (event.pointerType === 'mouse') {
+//         this.hoveredBubble = focusedBubble;
+//         const cursorBubble = this.draggedBubble || this.hoveredBubble;
+//         this.canvas.style.cursor = cursorBubble ? 'pointer' : 'auto';
+//       }
+//       if (this.possibleSelectedBubble !== focusedBubble) {
+//         this.possibleSelectedBubble = null;
+//       }
+//     }
+//   }
+
+//   // Handle the touch move event
+//   handleTouchMove(event) {
+//     if (this.draggedBubble) {
+//       event.preventDefault();
+//     }
+//   }
+
+//   // Handle the pointer up event
+//   handlePointerUp(event) {
+//     if (event.isPrimary) {
+//       if (this.possibleSelectedBubble) {
+//         if (Date.now() - this.timePointerDown < 1000) {
+//           const { currency } = this.possibleSelectedBubble;
+//           this.possibleSelectedBubble = null;
+//           this.eventSelect.fire(currency);
+//         }
+//       }
+//       this.draggedBubble = null;
+//     }
+//   }
+
+//   // Handle the pointer cancel event
+//   handlePointerCancel() {
+//     this.hoveredBubble = null;
+//     this.draggedBubble = null;
+//   }
+
+//   // Launch an explosion effect on the bubbles
+//   launchExplosion() {
+//     for (const bubble of this.bubbles) {
+//       const dx = bubble.posX - this.pointerX;
+//       const dy = bubble.posY - this.pointerY;
+//       const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+//       const force = 5000 / (distance * distance);
+//       bubble.applyForce(dx * force, dy * force);
+//     }
+//     this.wakeUp();
+//   }
+
+//   // Update the bubbles' positions and speeds
+//   update(deltaTime) {
+//     // const dampingFactor = 0.5 ** deltaTime;
+//     const dampingFactor = 0.6 ** deltaTime;
+//     const repulsionStrength = 0.0005 * Math.min(this.width, this.height);
+
+//     for (const bubble of this.bubbles) {
+//       bubble.update();
+//     }
+
+//     for (let i = 0; i < this.bubbles.length; i += 1) {
+//       const bubble1 = this.bubbles[i];
+//       if (bubble1.visible) {
+//         for (let j = i + 1; j < this.bubbles.length; j += 1) {
+//           const bubble2 = this.bubbles[j];
+//           if (!bubble2.visible) {
+//             continue;
+//           }
+//           const dx = bubble1.posX - bubble2.posX;
+//           const dy = bubble1.posY - bubble2.posY;
+//           const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+//           const combinedRadius = bubble1.radius + bubble2.radius;
+
+//           if (distance < combinedRadius) {
+//             const force = 6 / distance;
+//             const fx = dx * force;
+//             const fy = dy * force;
+//             const ratio1 = 1 - bubble1.radius / combinedRadius;
+//             const ratio2 = bubble2.radius / combinedRadius - 1;
+
+//             bubble1.applyForce(fx * ratio1, fy * ratio1);
+//             bubble2.applyForce(fx * ratio2, fy * ratio2);
+//           }
+//         }
+
+//         bubble1.applyForce(Helper.getRandomForce() * repulsionStrength, Helper.getRandomForce() * repulsionStrength);
+//       }
+//     }
+
+//     if (this.draggedBubble) {
+//       const dx = this.pointerX - this.draggedBubble.posX;
+//       const dy = this.pointerY - this.draggedBubble.posY;
+//       const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+//       const force = 5 / distance;
+
+//       this.draggedBubble.applyForce(dx * force, dy * force);
+//       this.wakeUp();
+//     }
+
+//     for (const bubble of this.bubbles) {
+//       bubble.speedX *= dampingFactor;
+//       bubble.speedY *= dampingFactor;
+//       bubble.posX += bubble.speedX * deltaTime;
+//       bubble.posY += bubble.speedY * deltaTime;
+
+//       if (bubble.posX < bubble.radius) {
+//         bubble.posX = bubble.radius;
+//         bubble.speedX *= -0.7;
+//       }
+//       if (bubble.posY < bubble.radius) {
+//         bubble.posY = bubble.radius;
+//         bubble.speedY *= -0.7;
+//       }
+//       if (bubble.posX > this.width - bubble.radius) {
+//         bubble.posX = this.width - bubble.radius;
+//         bubble.speedX *= -0.7;
+//       }
+//       if (bubble.posY > this.height - bubble.radius) {
+//         bubble.posY = this.height - bubble.radius;
+//         bubble.speedY *= -0.7;
+//       }
+//     }
+//   }
+
+//   // Render a border around a bubble
+//   renderBubbleBorder(bubble, color, width) {
+//     this.context.beginPath();
+//     this.context.arc(bubble.posX, bubble.posY, bubble.radius, 0, 2 * Math.PI);
+//     this.context.closePath();
+//     this.context.lineWidth = Constants.bubbleBorder * width;
+//     this.context.strokeStyle = color;
+//     this.context.stroke();
+//   }
+
+//   // Render all bubbles on the canvas
+//   render() {
+//     this.clear();
+//     let selectedBubble = null;
+
+//     for (const bubble of this.bubbles) {
+//       if (((bubble.renderFavoriteBorder = this.renderFavoriteBorder), bubble.visible)) {
+//         if (bubble.currency.id === this.selectedCurrencyId) {
+//           selectedBubble = bubble;
+//           continue;
+//         }
+//         if (this.draggedBubble === bubble) {
+//           continue;
+//         }
+//         bubble.render(this.context);
+//       }
+//     }
+
+//     if (this.draggedBubble) {
+//       if (this.draggedBubble !== selectedBubble) {
+//         this.draggedBubble.render(this.context);
+//         this.renderBubbleBorder(this.draggedBubble, 'white', 1);
+//       }
+//     } else if (this.hoveredBubble) {
+//       this.renderBubbleBorder(this.hoveredBubble, 'white', 1);
+//     }
+
+//     if (selectedBubble) {
+//       selectedBubble.render(this.context);
+//       const pulse = 0.5 * Math.sin(0.008 * Date.now()) + 0.5;
+//       const borderWidth = pulse + 2;
+//       const borderColor = `rgb(${Math.floor(255 * pulse)}, ${Math.floor(160 * pulse) + 95}, 255)`;
+//       this.renderBubbleBorder(selectedBubble, borderColor, borderWidth);
+//     }
+//   }
+
+//   // Unified recalculate method with improved revenue-based sizing
+//   recalculate() {
+//     if (this.needsRecalculation === false || this.bubbles.length === 0) {
+//       return;
+//     }
+
+//     const { size, color, colors, period, timeFrame, metricType, content, baseCurrency } = this.properties;
+//     const isInitialRecalculation = this.recalculationCount === 0;
+
+//     // Determine which time period to use (revenue or crypto)
+//     const effectiveTimeFrame = timeFrame || period || 'month';
+
+//     // Determine which metric type to use for sizing
+//     const effectiveMetricType = metricType || 'revenue';
+
+//     let totalSize = 0;
+//     let maxColorValue = 0;
+//     let maxRevenueValue = 0;
+//     let minRevenueValue = Infinity;
+
+//     // First pass: gather statistics and calculate initial sizes
+//     for (const bubble of this.bubbles) {
+//       const isNewPush = bubble.latestPush === this.latestPush;
+
+//       if (bubble.currency.metrics) {
+//         // For revenue data, directly calculate based on the selected metric
+//         if (isNewPush) {
+//           try {
+//             bubble.size = Helper.calculateRevenueRadius(
+//               bubble.currency,
+//               size,
+//               effectiveTimeFrame,
+//               effectiveMetricType
+//             );
+
+//             // Track min and max values for normalization
+//             const metricValue = bubble.currency.metrics[effectiveMetricType][effectiveTimeFrame];
+//             if (metricValue > maxRevenueValue) maxRevenueValue = metricValue;
+//             if (metricValue < minRevenueValue) minRevenueValue = metricValue;
+//           } catch (error) {
+//             console.warn("Error calculating revenue radius:", error);
+//             bubble.size = 5;
+//           }
+//         } else {
+//           bubble.size = Math.max(bubble.size, 5);
+//         }
+//       } else {
+//         // Fallback for crypto data
+//         bubble.size = isNewPush ? Helper.calculateRadius(bubble.currency, size, effectiveTimeFrame) : 0;
+//       }
+
+//       // Ensure minimum size to prevent disappearing
+//       if (bubble.size > 0 && bubble.size < 5) {
+//         bubble.size = 5;
+//       }
+
+//       if (bubble.size > 0) {
+//         totalSize += bubble.size;
+
+//         // Calculate color value
+//         let colorValue;
+//         try {
+//           if (bubble.currency.metrics) {
+//             colorValue = Math.abs(Helper.calculateRevenueColorValue(bubble.currency, color, effectiveTimeFrame));
+//           } else {
+//             colorValue = Math.abs(Helper.calculateColorValue(bubble.currency, color, effectiveTimeFrame));
+//           }
+//         } catch (error) {
+//           colorValue = 0;
+//         }
+
+//         if (colorValue > maxColorValue) {
+//           maxColorValue = colorValue;
+//         }
+//       }
+//     }
+
+//     // Calculate size factor based on available canvas space
+//     const canvasArea = this.width * this.height;
+//     const sizeFactor = totalSize === 0 ? 1 : Math.max(1, (canvasArea / totalSize) * 0.6);
+
+//     // Second pass: Apply calculated sizes and colors to bubbles
+//     for (const bubble of this.bubbles) {
+//       // Scale the bubble size based on total available space
+//       let radius = Math.max(10, Math.sqrt((bubble.size * sizeFactor) / Math.PI));
+
+//       // For revenue/profit, we can further adjust radius to be proportional to the value
+//       if (effectiveMetricType === 'revenue' || effectiveMetricType === 'profit') {
+//         try {
+//           const metricValue = bubble.currency.metrics[effectiveMetricType][effectiveTimeFrame];
+//           // Apply additional scaling for better proportionality
+//           const valueRatio = (metricValue - minRevenueValue) / (maxRevenueValue - minRevenueValue || 1);
+//           // Adjust radius to maintain minimum size while allowing larger values to be more prominent
+//           radius = Math.max(radius, 10 + valueRatio * 40);
+//         } catch (error) {
+//           console.warn("Error in revenue scaling:", error);
+//         }
+//       }
+
+//       // Set the radius with transition if this is initial calculation
+//       bubble.setRadius(radius, isInitialRecalculation ? 2000 : 500);
+
+//       // Calculate appropriate color
+//       let colorValue;
+//       try {
+//         if (bubble.currency.metrics) {
+//           colorValue = Helper.calculateRevenueColorValue(bubble.currency, color, effectiveTimeFrame);
+//         } else {
+//           colorValue = Helper.calculateColorValue(bubble.currency, color, effectiveTimeFrame);
+//         }
+//       } catch (error) {
+//         colorValue = 0;
+//       }
+
+//       bubble.setColor(Helper.calculateColor(colorValue, colors, maxColorValue));
+
+//       // Set content
+//       try {
+//         if (bubble.currency.metrics) {
+//           bubble.setContent(Helper.generateRevenueContent(bubble.currency, content, effectiveTimeFrame, baseCurrency));
+//         } else {
+//           bubble.setContent(Helper.generateContent(bubble.currency, content, effectiveTimeFrame, baseCurrency));
+//         }
+//       } catch (error) {
+//         bubble.setContent(bubble.currency.symbol || "");
+//       }
+
+//       // Keep bubbles within canvas
+//       const padding = 50;
+//       bubble.posX = Helper.clamp(bubble.posX, radius + padding, this.width - radius - padding);
+//       bubble.posY = Helper.clamp(bubble.posY, radius + padding, this.height - radius - padding);
+//     }
+
+//     // Reduce damping for smoother motion
+//     for (const bubble of this.bubbles) {
+//       bubble.speedX *= 0.9;
+//       bubble.speedY *= 0.9;
+//     }
+
+//     this.recalculationCount += 1;
+//     this.wakeUp();
+//   }
+
+//   // Set the properties for the bubbles
+//   setProperties(properties) {
+//     this.properties = properties || this.properties;
+//     this.needsRecalculation = true;
+//   }
+
+//   pushCurrencies(currencies) {
+//     // Increment the latest push timestamp
+//     this.latestPush += 1;
+
+//     this.bubbles = [];
+//     this.bubblesDict = {};
+
+//     // Process the new currencies
+//     for (const currency of currencies) {
+//       const { id } = currency;
+//       let bubble = new BubbleNew(currency);
+//       bubble.posX = Math.random() * this.width;
+//       bubble.posY = Math.random() * this.height;
+//       this.bubbles.push(bubble);
+//       this.bubblesDict[id] = bubble;
+//       bubble.currency = currency;
+//       bubble.latestPush = this.latestPush;
+//     }
+
+//     // Force recalculation and redraw
+//     this.needsRecalculation = true;
+//     this.recalculate();
+//     this.wakeUp();
+//   }
+
+//   // Override the destroy method to clean up resources
+//   destroy() {
+//     // First cancel any pending animation frame
+//     if (this.animationFrameId) {
+//       // Try both methods for safety
+//       if (typeof this.animationFrameId === 'number') {
+//         window.cancelAnimationFrame(this.animationFrameId);
+//         clearTimeout(this.animationFrameId);
+//       }
+//       this.animationFrameId = null;
+//     }
+
+//     // Remove event listeners (use the same options as when adding)
+//     if (this.canvas) {
+//       this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
+//       this.canvas.removeEventListener('pointermove', this.handlePointerMove);
+//       this.canvas.removeEventListener('touchmove', this.handleTouchMove);
+//       this.canvas.removeEventListener('pointerup', this.handlePointerUp);
+//       this.canvas.removeEventListener('pointercancel', this.handlePointerCancel);
+//     }
+
+//     // Call parent class stop method if it exists (doesn't use super)
+//     if (typeof this.stop === 'function') {
+//       this.stop();
+//     }
+
+//     // Clean up references
+//     this.bubbles = [];
+//     this.bubblesDict = {};
+//     this.hoveredBubble = null;
+//     this.draggedBubble = null;
+//     this.possibleSelectedBubble = null;
+
+//     // Remove event listeners
+//     this.eventSelect.clearListeners();
+//     this.eventResize.clearListeners();
+//     this.eventFrame.clearListeners();
+
+//     window.removeEventListener('resize', this.fillContainer);
+//   }
+// }
+
+// export default BubbleManager;
+
+
+/* eslint-disable prettier/prettier */
 /* eslint-disable no-cond-assign */
 /* eslint-disable no-continue */
 /* eslint-disable no-restricted-syntax */
@@ -911,6 +1433,10 @@ const isEmbedded = false;
 class BubbleManager extends CanvasManager {
   constructor(canvasElement, properties) {
     super(canvasElement);
+
+    // Make this instance globally accessible to Bubbles
+    window.activeBubbleManager = this;
+
     this.needsRecalculation = false; // Flag to indicate if bubble properties need recalculation
     this.recalculationCount = 0; // Count of recalculations
     this.latestPush = 0; // Timestamp of the latest data push
@@ -926,8 +1452,9 @@ class BubbleManager extends CanvasManager {
     this.selectedCurrencyId = null; // ID of the selected currency
     this.renderFavoriteBorder = true; // Flag to render favorite border
     this.eventSelect = new EventEmitter(); // Event emitter for selection events
-    this.animationFrameId = null; // ID of the animation frame request
-    this.isFirstLoad = true; // Flag to track first data load
+
+    // Initialize revenue ranges for border coloring
+    this.revenueRanges = { min: 0, max: 1000000, median: 500000 };
 
     this.eventResize.register(() => {
       this.needsRecalculation = true;
@@ -942,32 +1469,72 @@ class BubbleManager extends CanvasManager {
       this.render();
 
       const timeSinceLastWakeUp = Date.now() - this.timeLastWakeUp;
-      const delay = Math.round(timeSinceLastWakeUp / 50 - 20); // Changed from 150 to 50   
-      const adjustedDelay = Math.max(0, Math.min(delay, 200)); // Increased from 80 to 200
+      const delay = Math.round(timeSinceLastWakeUp / 150 - 20);
+      const adjustedDelay = Math.max(0, Math.min(delay, 80));
 
       if (adjustedDelay > 0 && !isEmbedded) {
-        this.animationFrameId = window.setTimeout(() => this.requestFrame(), adjustedDelay);
+        window.setTimeout(() => this.requestFrame(), adjustedDelay);
       } else {
-        setTimeout(() => this.requestFrame(), 50); // Add 50ms minimum delay
+        this.requestFrame();
       }
     });
 
-    this.properties = properties || {
-      size: 'volume',
-      color: 'performance',
-      colors: 'red-green',
-      period: 'month',
-      timeFrame: 'month',
-      metricType: 'revenue',
-      content: 'revenue',
-      baseCurrency: { code: 'USD' }
-    };
+    this.properties = properties;
 
     canvasElement.addEventListener('pointerdown', (event) => this.handlePointerDown(event), { passive: false });
     canvasElement.addEventListener('pointermove', (event) => this.handlePointerMove(event));
     canvasElement.addEventListener('touchmove', (event) => this.handleTouchMove(event), { passive: false });
     canvasElement.addEventListener('pointerup', (event) => this.handlePointerUp(event));
     canvasElement.addEventListener('pointercancel', () => this.handlePointerCancel());
+  }
+
+  // Calculate revenue ranges for the dataset
+  calculateRevenueRanges() {
+    if (!this.bubbles || this.bubbles.length === 0) {
+      this.revenueRanges = { min: 0, max: 1000000, median: 500000 };
+      return this.revenueRanges;
+    }
+
+    // Get revenue values (using price for crypto data)
+    const revenueValues = this.bubbles
+      .map(bubble => {
+        try {
+          // For crypto data, use price as the "revenue" metric
+          return bubble.currency.price || 0;
+        } catch (e) {
+          return 0;
+        }
+      })
+      .filter(val => val > 0); // Only consider positive values
+
+    if (revenueValues.length === 0) {
+      this.revenueRanges = { min: 0, max: 1000000, median: 500000 };
+      return this.revenueRanges;
+    }
+
+    // Sort values to find min, max, and median
+    revenueValues.sort((a, b) => a - b);
+
+    const min = revenueValues[0];
+    const max = revenueValues[revenueValues.length - 1];
+
+    // Calculate median
+    let median;
+    const mid = Math.floor(revenueValues.length / 2);
+    if (revenueValues.length % 2 === 0) {
+      median = (revenueValues[mid - 1] + revenueValues[mid]) / 2;
+    } else {
+      median = revenueValues[mid];
+    }
+
+    // Store the ranges
+    this.revenueRanges = { min, max, median };
+
+    // Also set it on window for global access if needed
+    window.minMaxRevenue = { min, max, median };
+
+    console.log(`Revenue ranges: min=${min}, max=${max}, median=${median}`);
+    return this.revenueRanges;
   }
 
   // Update the pointer's position
@@ -1074,9 +1641,8 @@ class BubbleManager extends CanvasManager {
 
   // Update the bubbles' positions and speeds
   update(deltaTime) {
-    // const dampingFactor = 0.5 ** deltaTime;
-    const dampingFactor = 0.6 ** deltaTime;
-    const repulsionStrength = 0.0005 * Math.min(this.width, this.height);
+    const dampingFactor = 0.5 ** deltaTime;
+    const repulsionStrength = 0.001 * Math.min(this.width, this.height);
 
     for (const bubble of this.bubbles) {
       bubble.update();
@@ -1192,207 +1758,49 @@ class BubbleManager extends CanvasManager {
     }
   }
 
-  // Enhanced recalculate method with larger, more readable bubbles
-  // recalculate() {
-  //   if (this.needsRecalculation === false || this.bubbles.length === 0) {
-  //     return;
-  //   }
-
-  //   const { size, color, colors, period, timeFrame, metricType, content, baseCurrency } = this.properties;
-  //   const isInitialRecalculation = this.recalculationCount === 0;
-  //   const effectiveTimeFrame = timeFrame || period || 'month';
-  //   const effectiveMetricType = metricType || 'revenue';
-
-  //   // FIRST PASS: Find min/max revenue values
-  //   let maxRevenueValue = 0;
-  //   let minRevenueValue = Infinity;
-
-  //   for (const bubble of this.bubbles) {
-  //     try {
-  //       if (bubble.currency.metrics && bubble.currency.metrics[effectiveMetricType]) {
-  //         const metricValue = bubble.currency.metrics[effectiveMetricType][effectiveTimeFrame];
-  //         if (metricValue > 0) {
-  //           maxRevenueValue = Math.max(maxRevenueValue, metricValue);
-  //           minRevenueValue = Math.min(minRevenueValue, metricValue);
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.warn("Error getting metric value:", error);
-  //     }
-  //   }
-
-  //   console.log(`Min revenue: ${minRevenueValue}, Max revenue: ${maxRevenueValue}`);
-
-  //   // SECOND PASS: Calculate and assign sizes with increased base size
-  //   for (const bubble of this.bubbles) {
-  //     // Get the metric value
-  //     let metricValue = 0;
-  //     try {
-  //       metricValue = bubble.currency.metrics?.[effectiveMetricType]?.[effectiveTimeFrame] || 0;
-  //     } catch (error) {
-  //       console.warn("Error getting metric value:", error);
-  //     }
-
-  //     // Calculate a larger bubble size with better readability
-  //     let bubbleSize = 80; // Increased base size for better readability
-
-  //     if (metricValue > 0) {
-  //       // Use logarithmic scaling for better visual representation with readability
-  //       const logMin = Math.log10(Math.max(1, minRevenueValue));
-  //       const logMax = Math.log10(Math.max(10, maxRevenueValue));
-  //       const logValue = Math.log10(Math.max(1, metricValue));
-
-  //       // Normalize on a logarithmic scale from 0 to 1
-  //       const normalizedValue = (logValue - logMin) / (logMax - logMin || 1);
-
-  //       // Map to size range: minimum 80px (very readable) to 160px (2x larger)
-  //       bubbleSize = 80 + (normalizedValue * 80);
-
-  //       // For top 3 values, make them slightly more prominent
-  //       if (metricValue > maxRevenueValue * 0.8) {
-  //         bubbleSize += 20; // Extra boost for top values
-  //       }
-  //     }
-
-  //     // Calculate color value
-  //     let colorValue;
-  //     try {
-  //       if (bubble.currency.metrics) {
-  //         colorValue = Helper.calculateRevenueColorValue(bubble.currency, color, effectiveTimeFrame);
-  //       } else {
-  //         colorValue = Helper.calculateColorValue(bubble.currency, color, effectiveTimeFrame);
-  //       }
-  //     } catch (error) {
-  //       colorValue = 0;
-  //     }
-
-  //     // Set the radius with appropriate transition
-  //     bubble.setRadius(bubbleSize, isInitialRecalculation ? 2000 : 500);
-
-  //     // Set the color
-  //     bubble.setColor(Helper.calculateColor(colorValue, colors, Math.max(1, Math.abs(colorValue) * 5)));
-
-  //     // Set content
-  //     try {
-  //       if (bubble.currency.metrics) {
-  //         bubble.setContent(Helper.generateRevenueContent(bubble.currency, content, effectiveTimeFrame, baseCurrency));
-  //       } else {
-  //         bubble.setContent(Helper.generateContent(bubble.currency, content, effectiveTimeFrame, baseCurrency));
-  //       }
-  //     } catch (error) {
-  //       bubble.setContent(bubble.currency.symbol || "");
-  //     }
-
-  //     // Keep bubbles within canvas
-  //     const padding = 20;
-  //     bubble.posX = Helper.clamp(bubble.posX, bubbleSize + padding, this.width - bubbleSize - padding);
-  //     bubble.posY = Helper.clamp(bubble.posY, bubbleSize + padding, this.height - bubbleSize - padding);
-  //   }
-
-  //   // Reduce damping for smoother motion
-  //   for (const bubble of this.bubbles) {
-  //     bubble.speedX *= 0.9;
-  //     bubble.speedY *= 0.9;
-  //   }
-
-  //   this.needsRecalculation = false;
-  //   this.recalculationCount += 1;
-  //   this.wakeUp();
-  // }
-
+  // Recalculate the bubbles' properties
   recalculate() {
-    if (!this.needsRecalculation || this.bubbles.length === 0) {
+    if (this.needsRecalculation === false || this.bubbles.length === 0) {
       return;
     }
 
-    const { size, color, colors, period, timeFrame, metricType, content, baseCurrency } = this.properties;
+    // Calculate revenue ranges for border coloring
+    this.calculateRevenueRanges();
+
+    const { size, color, colors, period, content, baseCurrency } = this.properties;
     const isInitialRecalculation = this.recalculationCount === 0;
-    const effectiveTimeFrame = timeFrame || period || 'month';
-    const effectiveMetricType = metricType || 'revenue';
 
-    // Determine min and max revenue values
-    let maxRevenueValue = 0;
-    let minRevenueValue = Infinity;
+    let totalSize = 0;
+    let maxColorValue = 0;
 
     for (const bubble of this.bubbles) {
-      try {
-        const metricValue = bubble.currency.metrics?.[effectiveMetricType]?.[effectiveTimeFrame];
-        if (metricValue > 0) {
-          maxRevenueValue = Math.max(maxRevenueValue, metricValue);
-          minRevenueValue = Math.min(minRevenueValue, metricValue);
+      const isNewPush = bubble.latestPush === this.latestPush;
+      bubble.size = isNewPush ? Helper.calculateRadius(bubble.currency, size, period) : 0;
+      if (bubble.size > 0) {
+        totalSize += bubble.size;
+        const colorValue = Math.abs(Helper.calculateColorValue(bubble.currency, color, period));
+        if (colorValue > maxColorValue) {
+          maxColorValue = colorValue;
         }
-      } catch (error) {
-        console.warn("Error getting metric value:", error);
       }
     }
 
-    // Define size range
-    const minBubbleSize = 80;
-    const maxBubbleSize = 160;
+    const canvasArea = this.width * this.height;
+    const sizeFactor = totalSize === 0 ? 0 : (canvasArea / totalSize) * 0.6;
 
-    // Calculate logarithmic min and max
-    const logMin = Math.log10(Math.max(1, minRevenueValue));
-    const logMax = Math.log10(Math.max(10, maxRevenueValue));
-
-    // Adjust each bubble
     for (const bubble of this.bubbles) {
-      let metricValue = 0;
-      try {
-        metricValue = bubble.currency.metrics?.[effectiveMetricType]?.[effectiveTimeFrame] || 0;
-      } catch (error) {
-        console.warn("Error getting metric value:", error);
-      }
+      // Pass current properties to each bubble for revenue calculations
+      bubble.properties = this.properties;
 
-      let bubbleSize = minBubbleSize;
+      const radius = Math.sqrt((bubble.size * sizeFactor) / Math.PI);
+      bubble.setRadius(radius, isInitialRecalculation);
 
-      if (metricValue > 0) {
-        const logValue = Math.log10(Math.max(1, metricValue));
-        const normalizedValue = (logValue - logMin) / (logMax - logMin || 1);
-        bubbleSize = minBubbleSize + normalizedValue * (maxBubbleSize - minBubbleSize);
+      const colorValue = Helper.calculateColorValue(bubble.currency, color, period);
+      bubble.setColor(Helper.calculateColor(colorValue, colors, maxColorValue));
+      bubble.setContent(Helper.generateContent(bubble.currency, content, period, baseCurrency));
 
-        // Optional: Highlight top performers
-        if (metricValue > maxRevenueValue * 0.8) {
-          bubbleSize += 20;
-        }
-      }
-
-      // Calculate color value
-      let colorValue;
-      try {
-        if (bubble.currency.metrics) {
-          colorValue = Helper.calculateRevenueColorValue(bubble.currency, color, effectiveTimeFrame);
-        } else {
-          colorValue = Helper.calculateColorValue(bubble.currency, color, effectiveTimeFrame);
-        }
-      } catch (error) {
-        colorValue = 0;
-      }
-
-      // Set radius and color
-      bubble.setRadius(bubbleSize, isInitialRecalculation ? 2000 : 500);
-      bubble.setColor(Helper.calculateColor(colorValue, colors, Math.max(1, Math.abs(colorValue) * 5)));
-
-      // Set content
-      try {
-        if (bubble.currency.metrics) {
-          bubble.setContent(Helper.generateRevenueContent(bubble.currency, content, effectiveTimeFrame, baseCurrency));
-        } else {
-          bubble.setContent(Helper.generateContent(bubble.currency, content, effectiveTimeFrame, baseCurrency));
-        }
-      } catch (error) {
-        bubble.setContent(bubble.currency.symbol || "");
-      }
-
-      // Ensure bubbles stay within canvas bounds
-      const padding = 20;
-      bubble.posX = Helper.clamp(bubble.posX, bubbleSize + padding, this.width - bubbleSize - padding);
-      bubble.posY = Helper.clamp(bubble.posY, bubbleSize + padding, this.height - bubbleSize - padding);
-    }
-
-    // Apply damping for smoother motion
-    for (const bubble of this.bubbles) {
-      bubble.speedX *= 0.9;
-      bubble.speedY *= 0.9;
+      bubble.posX = Helper.clamp(bubble.posX, radius, this.width - radius);
+      bubble.posY = Helper.clamp(bubble.posY, radius, this.height - radius);
     }
 
     this.needsRecalculation = false;
@@ -1400,77 +1808,58 @@ class BubbleManager extends CanvasManager {
     this.wakeUp();
   }
 
-
   // Set the properties for the bubbles
   setProperties(properties) {
-    this.properties = properties || this.properties;
+    this.properties = properties;
     this.needsRecalculation = true;
   }
 
+  // Add or update bubbles based on the provided currencies
   pushCurrencies(currencies) {
-    // Increment the latest push timestamp
     this.latestPush += 1;
+    console.log(`Pushing ${currencies.length} currencies to bubbles`);
 
+    // Clear existing bubbles for a fresh start
     this.bubbles = [];
     this.bubblesDict = {};
 
-    // Process the new currencies
     for (const currency of currencies) {
       const { id } = currency;
-      let bubble = new BubbleNew(currency);
-      bubble.posX = Math.random() * this.width;
-      bubble.posY = Math.random() * this.height;
+      // Create a new bubble with passed properties
+      let bubble = new BubbleNew(currency, this.properties);
+
+      // Position bubbles with some padding from edges
+      const padding = 50;
+      bubble.posX = padding + Math.random() * (this.width - 2 * padding);
+      bubble.posY = padding + Math.random() * (this.height - 2 * padding);
+
       this.bubbles.push(bubble);
       this.bubblesDict[id] = bubble;
       bubble.currency = currency;
       bubble.latestPush = this.latestPush;
     }
 
-    // Force recalculation and redraw
+    // Force recalculation with new data
     this.needsRecalculation = true;
     this.recalculate();
-    this.wakeUp();
   }
 
-  // Override the destroy method to clean up resources
+  // Proper cleanup method
   destroy() {
-    // First cancel any pending animation frame
-    if (this.animationFrameId) {
-      // Try both methods for safety
-      if (typeof this.animationFrameId === 'number') {
-        window.cancelAnimationFrame(this.animationFrameId);
-        clearTimeout(this.animationFrameId);
-      }
-      this.animationFrameId = null;
-    }
-
-    // Remove event listeners (use the same options as when adding)
-    if (this.canvas) {
-      this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
-      this.canvas.removeEventListener('pointermove', this.handlePointerMove);
-      this.canvas.removeEventListener('touchmove', this.handleTouchMove);
-      this.canvas.removeEventListener('pointerup', this.handlePointerUp);
-      this.canvas.removeEventListener('pointercancel', this.handlePointerCancel);
-    }
-
-    // Call parent class stop method if it exists (doesn't use super)
-    if (typeof this.stop === 'function') {
-      this.stop();
-    }
-
-    // Clean up references
-    this.bubbles = [];
-    this.bubblesDict = {};
-    this.hoveredBubble = null;
-    this.draggedBubble = null;
-    this.possibleSelectedBubble = null;
-
     // Remove event listeners
-    this.eventSelect.clearListeners();
-    this.eventResize.clearListeners();
-    this.eventFrame.clearListeners();
+    this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
+    this.canvas.removeEventListener('pointermove', this.handlePointerMove);
+    this.canvas.removeEventListener('touchmove', this.handleTouchMove);
+    this.canvas.removeEventListener('pointerup', this.handlePointerUp);
+    this.canvas.removeEventListener('pointercancel', this.handlePointerCancel);
 
-    window.removeEventListener('resize', this.fillContainer);
+    // Clean up any animation frames
+    this.stop();
+
+    // Remove global reference
+    if (window.activeBubbleManager === this) {
+      window.activeBubbleManager = null;
+    }
   }
 }
 

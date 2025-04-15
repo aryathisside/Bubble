@@ -210,8 +210,8 @@ class Bubble {
 
   // Set the bubble's radius with optional transition time
   setRadius(radi, transitionTime) {
-    // Never allow radius to go below minimum
-    const radius = Math.max(Constants.minRadius, Number.isFinite(radi) ? radi : Constants.minRadius);
+    // Change minimum size from Constants.minRadius to a smaller value
+    const radius = Math.max(5, Number.isFinite(radi) ? radi : 5);
 
     // Adapt to your existing Tween implementation
     if (transitionTime > 0) {

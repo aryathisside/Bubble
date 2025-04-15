@@ -90,7 +90,7 @@
 import { Box, Typography } from '@mui/material';
 import BubbleCanvas from './BubbleCanvas';
 import useDataStore from '../../store/useDataStore';
-import Logo from '../../assets/images/logo_black.png';
+import Logo from '../../assets/images/logo.png';
 import { useEffect } from 'react';
 import './style.css';
 

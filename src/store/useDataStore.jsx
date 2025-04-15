@@ -307,7 +307,8 @@ const useDataStore = create((set, get) => ({
       console.log('Fetching revenue data from API...');
 
       // Replace with your actual API endpoint
-      const response = await fetch('http://localhost:3004/api/company/data');
+      // const response = await fetch('https://testverify.certs365.io/crypto/api/company/data');
+      const response = await fetch(`${import.meta.env.VITE_STAGING_BACKEND}/api/company/data`);
 
       // Add this to check the response content
       const text = await response.text();

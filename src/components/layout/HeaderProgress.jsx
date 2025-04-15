@@ -207,8 +207,8 @@ const HeaderProgress = () => {
     // For revenue data
 
     // const revenueData = generateRevenueData();
-    const response = await fetch('http://localhost:3004/api/company/data');
-    // Add this to check the response content
+    const response = await fetch(`${import.meta.env.VITE_STAGING_BACKEND}/api/company/data`);
+
     const text = await response.text();
     console.log('Raw response:', text.substring(0, 100)); // Log first 100 chars of response
 

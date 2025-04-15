@@ -61,70 +61,69 @@ export const createPerformanceObject = (growthObj) => {
 };
 
 // export const generateRevenueData = () => {
-//     // Updated location structure for India to avoid confusion with Delhi
-
-
 //     const locations = {
-//         countries: ['USA', 'Canada', 'UK', 'Germany', 'Australia', 'Japan', 'India', 'Brazil'],
+//         countries: ['France', 'Mexico', 'South Korea', 'Italy', 'South Africa', 'Sweden', 'Argentina', 'UAE'],
 //         states: {
-//             'USA': ['California', 'New York', 'Texas', 'Florida', 'Illinois'],
-//             'Canada': ['Ontario', 'Quebec', 'British Columbia', 'Alberta', 'Nova Scotia'],
-//             'UK': ['England', 'Scotland', 'Wales', 'Northern Ireland'],
-//             'Germany': ['Bavaria', 'Berlin', 'Hamburg', 'Hesse', 'Saxony'],
-//             'Australia': ['New South Wales', 'Victoria', 'Queensland', 'Western Australia'],
-//             'Japan': ['Tokyo Prefecture', 'Osaka Prefecture', 'Hokkaido', 'Kyoto Prefecture', 'Okinawa'],
-//             'India': ['Maharashtra', 'Delhi NCR', 'Tamil Nadu', 'Karnataka', 'Gujarat'], // Changed from 'Delhi' to 'Delhi NCR'
-//             'Brazil': ['São Paulo', 'Rio de Janeiro', 'Minas Gerais', 'Bahia', 'Amazonas']
+//             'France': ['Île-de-France', 'Provence-Alpes-Côte d\'Azur', 'Nouvelle-Aquitaine'],
+//             'Mexico': ['Jalisco', 'Nuevo León', 'Mexico City'],
+//             'South Korea': ['Seoul', 'Busan', 'Incheon'],
+//             'Italy': ['Lombardy', 'Lazio', 'Sicily'],
+//             'South Africa': ['Gauteng', 'Western Cape', 'KwaZulu-Natal'],
+//             'Sweden': ['Stockholm County', 'Västra Götaland', 'Skåne'],
+//             'Argentina': ['Buenos Aires', 'Córdoba', 'Santa Fe'],
+//             'UAE': ['Dubai', 'Abu Dhabi', 'Sharjah']
 //         },
 //         cities: {
-//             // USA
-//             'California': ['Los Angeles', 'San Francisco', 'San Diego', 'San Jose', 'Sacramento'],
-//             'New York': ['New York City', 'Buffalo', 'Rochester', 'Syracuse', 'Albany'], // Changed 'New York' to 'New York City'
-//             'Texas': ['Houston', 'Dallas', 'Austin', 'San Antonio', 'Fort Worth'],
+//             'Île-de-France': ['Paris', 'Boulogne-Billancourt', 'Versailles'],
+//             'Provence-Alpes-Côte d\'Azur': ['Nice', 'Marseille', 'Cannes'],
+//             'Nouvelle-Aquitaine': ['Bordeaux', 'Limoges', 'Pau'],
 
-//             // Canada
-//             'Ontario': ['Toronto', 'Ottawa', 'Hamilton', 'Mississauga', 'London'],
-//             'Quebec': ['Montreal', 'Quebec City', 'Laval', 'Gatineau', 'Sherbrooke'],
+//             'Jalisco': ['Guadalajara', 'Zapopan', 'Tlaquepaque'],
+//             'Nuevo León': ['Monterrey', 'San Nicolás', 'Guadalupe'],
+//             'Mexico City': ['Mexico City'],
 
-//             // UK
-//             'England': ['London', 'Manchester', 'Birmingham', 'Liverpool', 'Leeds'],
-//             'Scotland': ['Edinburgh', 'Glasgow', 'Aberdeen', 'Dundee', 'Inverness'],
+//             'Seoul': ['Gangnam', 'Jongno', 'Mapo'],
+//             'Busan': ['Haeundae', 'Seomyeon', 'Gwangalli'],
+//             'Incheon': ['Songdo', 'Bupyeong', 'Namdong'],
 
-//             // Germany
-//             'Bavaria': ['Munich', 'Nuremberg', 'Augsburg', 'Regensburg', 'Würzburg'],
+//             'Lombardy': ['Milan', 'Bergamo', 'Brescia'],
+//             'Lazio': ['Rome', 'Latina', 'Viterbo'],
+//             'Sicily': ['Palermo', 'Catania', 'Messina'],
 
-//             // Australia
-//             'New South Wales': ['Sydney', 'Newcastle', 'Wollongong', 'Parramatta', 'Coffs Harbour'],
+//             'Gauteng': ['Johannesburg', 'Pretoria', 'Soweto'],
+//             'Western Cape': ['Cape Town', 'Stellenbosch', 'George'],
+//             'KwaZulu-Natal': ['Durban', 'Pietermaritzburg', 'Richards Bay'],
 
-//             // Japan
-//             'Tokyo Prefecture': ['Shinjuku', 'Shibuya', 'Minato', 'Taito', 'Setagaya'],
+//             'Stockholm County': ['Stockholm', 'Solna', 'Sundbyberg'],
+//             'Västra Götaland': ['Gothenburg', 'Borås', 'Trollhättan'],
+//             'Skåne': ['Malmö', 'Lund', 'Helsingborg'],
 
-//             // India 
-//             'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Nashik', 'Thane'],
-//             'Delhi NCR': ['New Delhi', 'Gurgaon', 'Noida', 'Faridabad', 'Ghaziabad'], // Changed 'Delhi' city to 'New Delhi'
-//             'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Salem', 'Tiruchirappalli'],
+//             'Buenos Aires': ['Buenos Aires City', 'La Plata', 'Mar del Plata'],
+//             'Córdoba': ['Córdoba City', 'Villa María', 'Río Cuarto'],
+//             'Santa Fe': ['Rosario', 'Santa Fe City', 'Rafaela'],
 
-//             // Brazil
-//             'São Paulo': ['São Paulo City', 'Campinas', 'Guarulhos', 'Santo André', 'Osasco']
+//             'Dubai': ['Deira', 'Bur Dubai', 'Jumeirah'],
+//             'Abu Dhabi': ['Abu Dhabi City', 'Al Ain', 'Madinat Zayed'],
+//             'Sharjah': ['Sharjah City', 'Khor Fakkan', 'Kalba']
 //         }
 //     };
 
-//     const industries = ['Healthcare', 'Finance', 'Technology', 'Education', 'Manufacturing', 'Retail'];
-//     const customerTypes = ['Corporate', 'Government', 'Non-Profit', 'Academic'];
-//     const brands = ['NetCom Learning', 'AI CERT'];
-//     const accountStatuses = ['Active', 'Inactive', 'Prospect', 'Churned', 'On Hold'];
-//     const salesReps = ['John Smith', 'Sarah Johnson', 'Michael Brown', 'David Lee', 'Lisa Chen'];
-//     const territories = ['East Coast', 'West Coast', 'Midwest', 'South', 'International'];
-//     const opportunityStages = ['Discovery', 'Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost'];
-//     const regionTags = ['East Coast', 'West Coast', 'EMEA', 'APAC', 'LATAM'];
-//     const aiAdoptionLevels = ['None', 'Exploring', 'Scaling'];
+//     const industries = ['Energy', 'Transport', 'Finance', 'Media', 'Tourism', 'Construction'];
+//     const customerTypes = ['Enterprise', 'Startup', 'Public Sector', 'Freelancer'];
+//     const brands = ['DataFlow Inc.', 'NextAI', 'Quantix', 'NeoEdge'];
+//     const accountStatuses = ['Engaged', 'Pending', 'Dormant', 'Churned', 'Escalated'];
+//     const salesReps = ['Emma Green', 'Liam Carter', 'Noah Kim', 'Olivia Rossi', 'Lucas Müller'];
+//     const territories = ['Central Europe', 'Latin America', 'Southeast Asia', 'MENA', 'Nordics'];
+//     const opportunityStages = ['Initial Contact', 'In Discussion', 'Sent Proposal', 'Under Review', 'Finalized', 'Rejected'];
+//     const regionTags = ['EU', 'LATAM', 'APAC', 'MEA', 'Scandinavia'];
+//     const aiAdoptionLevels = ['Not Interested', 'Considering', 'Implemented'];
 
-//     const getRandomElement = (array) => array[Math.floor(Math.random() * array.length)];
-//     const getRandomDate = (startDays, endDays) => {
-//         const today = new Date();
-//         const daysAgo = Math.floor(Math.random() * (endDays - startDays) + startDays);
-//         const date = new Date(today);
-//         date.setDate(date.getDate() - daysAgo);
+//     const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
+//     const getRandomDate = (start, end) => {
+//         const now = new Date();
+//         const offset = Math.floor(Math.random() * (end - start) + start);
+//         const date = new Date(now);
+//         date.setDate(now.getDate() - offset);
 //         return date.toISOString().split('T')[0];
 //     };
 
@@ -133,30 +132,16 @@ export const createPerformanceObject = (growthObj) => {
 
 //     locations.countries.forEach(country => {
 //         const states = locations.states[country] || [];
-
 //         states.forEach(state => {
 //             const cities = locations.cities[state] || [];
-
 //             cities.forEach(city => {
-//                 // Create location object for image lookup
-//                 const locationObj = {
-//                     name: city,
-//                     state: state,
-//                     country: country
-//                 };
+//                 const imageUrl = `https://source.unsplash.com/random/400x300?${city}`;
+//                 const baseRevenue = Math.random() * 500000 + 50000;
+//                 const baseProfit = baseRevenue * (Math.random() * 0.25 + 0.05);
 
-//                 // Get the appropriate image based on location
-//                 const imageUrl = getLocationImage(locationObj);
-
-//                 // Generate base financial values
-//                 const baseRevenue = Math.random() * 1000000 + 100000;
-//                 const baseProfit = baseRevenue * (Math.random() * 0.3 + 0.1);
-
-//                 // Create metrics using our dynamic function
 //                 const metricsObj = createMetricsObject(baseRevenue, baseProfit);
 
-//                 // Create the entry with all new CRM fields
-//                 const entry = {
+//                 revenueData.push({
 //                     id: id.toString(),
 //                     name: city,
 //                     state,
@@ -164,53 +149,45 @@ export const createPerformanceObject = (growthObj) => {
 //                     rank: id,
 //                     image: imageUrl,
 
-//                     // Add base metrics data
 //                     performance: createPerformanceObject(metricsObj.growth),
 //                     metrics: metricsObj,
-//                     volume: metricsObj.revenue.month * 0.8,
+//                     volume: metricsObj.revenue.month * 0.75,
 //                     price: metricsObj.profit.month,
-//                     marketcap: metricsObj.revenue.year * 0.8,
+//                     marketcap: metricsObj.revenue.year * 0.85,
 
-//                     // Add customer identification info
 //                     customer_id: `CUST-${id}`,
-//                     customer_name: `${city} Corporation`,
+//                     customer_name: `${city} Solutions`,
 //                     brand: getRandomElement(brands),
 //                     customer_type: getRandomElement(customerTypes),
 //                     industry: getRandomElement(industries),
 
-//                     // Add location data
-//                     latitude: 40.7128 + (Math.random() - 0.5) * 10,
-//                     longitude: -74.0060 + (Math.random() - 0.5) * 10,
+//                     latitude: 48 + (Math.random() - 0.5) * 10,
+//                     longitude: 2 + (Math.random() - 0.5) * 10,
 //                     region_tag: getRandomElement(regionTags),
 
-//                     // Add revenue & deal data
 //                     annual_revenue: baseRevenue * 12,
-//                     deal_size: baseRevenue * (Math.random() * 0.2 + 0.05),
-//                     lifetime_value: baseRevenue * 12 * (Math.random() * 3 + 1),
+//                     deal_size: baseRevenue * (Math.random() * 0.3 + 0.05),
+//                     lifetime_value: baseRevenue * 12 * (Math.random() * 2.5 + 1),
 //                     engagement_score: Math.floor(Math.random() * 100),
 
-//                     // Add sales & CRM details
 //                     assigned_sales_rep: getRandomElement(salesReps),
 //                     account_owner_id: `REP-${Math.floor(Math.random() * 1000)}`,
 //                     opportunity_stage: getRandomElement(opportunityStages),
 //                     last_engaged_date: getRandomDate(0, 180),
 //                     account_status: getRandomElement(accountStatuses),
 
-//                     // Add user-role based tags
-//                     is_priority_for_ceo: Math.random() > 0.8, // 20% chance of being a priority
+//                     is_priority_for_ceo: Math.random() > 0.85,
 //                     sales_director_region: getRandomElement(regionTags),
 //                     rep_territory: getRandomElement(territories),
 
-//                     // Add optional metadata
 //                     ai_adoption_level: getRandomElement(aiAdoptionLevels),
 //                     training_products_used: Array(Math.floor(Math.random() * 5))
 //                         .fill(0)
-//                         .map(() => `Product-${Math.floor(Math.random() * 20)}`),
+//                         .map(() => `Product-${Math.floor(Math.random() * 25)}`),
 //                     customer_logo_url: `https://logo.clearbit.com/${city.toLowerCase().replace(/\s/g, '')}.com`,
 //                     notes_url: `https://crm.example.com/customers/${id}`
-//                 };
+//                 });
 
-//                 revenueData.push(entry);
 //                 id++;
 //             });
 //         });
@@ -218,6 +195,7 @@ export const createPerformanceObject = (growthObj) => {
 
 //     return revenueData;
 // };
+
 
 /**
  * 

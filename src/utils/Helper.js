@@ -389,7 +389,8 @@ class Helper {
     // This makes the size difference less extreme between very large and small values
     // while still maintaining proportional relationships
     if (value > 0) {
-      return Math.max(10, Math.log10(value) * 10);
+      // Use cube root to make size differences more pronounced
+      return Math.max(10, Math.cbrt(value) * 5);
     }
 
     return 10; // Minimum size for bubbles with 0 or negative value

@@ -745,7 +745,7 @@ const HeaderTabs = () => {
         {layout === 'bubble' && (
           <>
             <Box width={'150px'} display={'flex'} justifyContent={'center'} alignItems={'center'}>
-              <img className="ml-2" src={isMobile ? icon : logo} alt="Brand Image" style={{ height: 40 }} />
+              <img className="ml-2" src={isMobile ? icon : logo} alt="Brand Image" style={{ height: 25 }} />
             </Box>
             <Scrollbar
               style={{ height: '100%', display: 'flex', justifyContent: 'center' }}

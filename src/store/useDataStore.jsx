@@ -304,12 +304,11 @@ const useDataStore = create((set, get) => ({
   fetchRevenueData: async () => {
     set({ loading: true });
     try {
-      console.log('Fetching revenue data from API');
-      // Replace with your actual API endpoint
-      const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3004';
-      console.log('Using API URL:', apiUrl);
+      console.log('Fetching revenue data from API...');
 
-      const response = await fetch(`${apiUrl}/api/company/data`);
+      // Replace with your actual API endpoint
+      // const response = await fetch('https://testverify.certs365.io/crypto/api/company/data');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/company/data`);
 
       // Add this to check the response content
       const text = await response.text();

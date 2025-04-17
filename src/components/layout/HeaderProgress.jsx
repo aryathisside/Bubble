@@ -207,11 +207,7 @@ const HeaderProgress = () => {
     // For revenue data
 
     // const revenueData = generateRevenueData();
-    // const response = await fetch(`http://localhost:3004/api/company/data`);
-    const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3004';
-    console.log('Using API URL:', apiUrl);
-
-    const response = await fetch(`${apiUrl}/api/company/data`);
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/company/data`);
 
     const text = await response.text();
     console.log('Raw response:', text.substring(0, 100)); // Log first 100 chars of response

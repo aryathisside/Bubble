@@ -97,7 +97,7 @@ export const cityAttractions = {
 };
 
 // Default image as a fallback
-export const defaultLocationImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAvElEQVRIS+3VMQqDQBBF0c9RQhDYh/w3aC1JUhL0ApZBiEEsXMzmfsM25MJ8z+XKADyLgZ0C6DLvhAXbex3fFRp8nE/A5gwACcL0Ac8LUNItN2cMp5J5GcePwjqvVlm7S2owvL8b0IfSuhGa1p7gNvSh1snNCcYtHvd8GEWfCJhKzBhXnBhVnDxaMeFjFhRV4z1ThvSYo8oAkOQwRoMU8+ACrJFiNfJxOZQAAAABJRU5ErkJggg==';
+export const defaultLocationImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AkEBDEVWe5tUAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAJUlEQVRIx+3NMQEAAAjDMKYc6WhVBzxsYElTl0VFRUVFRUVF5c0D2JyjAZA/8w8AAAAASUVORK5CYII=';
 
 // Function to get the appropriate image URL based on location type and name
 export function getLocationImage(location) {
